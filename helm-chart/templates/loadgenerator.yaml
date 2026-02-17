@@ -110,6 +110,8 @@ spec:
         env:
         - name: FRONTEND_ADDR
           value: "{{ .Values.frontend.name }}:80"
+        - name: PROTOCOL
+          value: "https"
         - name: USERS
           value: "10"
         - name: RATE

@@ -46,4 +46,7 @@ COPY locustfile.py .
 # enable gevent support in debugger
 ENV GEVENT_SUPPORT=True
 
-ENTRYPOINT locust --host="http://${FRONTEND_ADDR}" --headless -u "${USERS:-10}" -r "${RATE:-1}" 2>&1
+# Set protocol to HTTPS by default for security (can be overridden to http for local dev)
+ENV PROTOCOL=https
+
+ENTRYPOINT locust --host="${PROTOCOL}://${FRONTEND_ADDR}" --headless -u "${USERS:-10}" -r "${RATE:-1}" 2>&1
