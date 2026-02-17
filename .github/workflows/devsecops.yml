@@ -46,7 +46,8 @@ jobs:
         with:
           projectBaseDir: .
         env:
-          SONAR_TOKEN: ${{ secrets.NIZARARTUOL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   zap:
     runs-on: ubuntu-latest
