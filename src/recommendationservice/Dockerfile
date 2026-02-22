@@ -36,6 +36,10 @@ RUN apk update \
     && apk add --no-cache libstdc++ \
     && rm -rf /var/cache/apk/*
 
+# Create non-root user
+RUN addgroup -g 1000 appuser && \
+    adduser -u 1000 -G appuser -s /bin/sh -D appuser
+
 # get packages
 WORKDIR /recommendationservice
 
@@ -45,8 +49,14 @@ COPY --from=builder /usr/local/lib/python3.14/ /usr/local/lib/python3.14/
 # Add the application
 COPY . .
 
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /recommendationservice
+
 # set listen port
 ENV PORT="8080"
 EXPOSE 8080
+
+# Run as non-root user
+USER 1000
 
 ENTRYPOINT ["python", "recommendation_server.py"]

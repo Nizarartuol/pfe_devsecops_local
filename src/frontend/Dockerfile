@@ -38,4 +38,8 @@ COPY ./static ./static
 ENV GOTRACEBACK=single
 
 EXPOSE 8080
+
+# Run as non-root user (distroless nonroot user)
+USER 65532
+
 ENTRYPOINT ["/src/server"]

@@ -34,8 +34,19 @@ FROM eclipse-temurin:25.0.1_8-jre-alpine@sha256:9c65fe190cb22ba92f50b8d29a749d0f
 #     | tar xzv -C /opt/cprof && \
 #     rm -rf profiler_java_agent.tar.gz
 
+# Create non-root user
+RUN addgroup -g 1000 appuser && \
+    adduser -u 1000 -G appuser -s /bin/sh -D appuser
+
 WORKDIR /app
 COPY --from=builder /app .
 
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /app
+
 EXPOSE 9555
+
+# Run as non-root user
+USER 1000
+
 ENTRYPOINT ["/app/build/install/hipstershop/bin/AdService"]

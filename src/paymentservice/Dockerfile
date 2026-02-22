@@ -31,12 +31,22 @@ FROM alpine:3.23.3@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f
 
 RUN apk add --no-cache nodejs
 
+# Create non-root user
+RUN addgroup -g 1000 appuser && \
+    adduser -u 1000 -G appuser -s /bin/sh -D appuser
+
 WORKDIR /usr/src/app
 
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 
 COPY . .
 
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /usr/src/app
+
 EXPOSE 50051
+
+# Run as non-root user
+USER 1000
 
 ENTRYPOINT [ "node", "index.js" ]

@@ -28,6 +28,10 @@ FROM base
 # Enable unbuffered logging
 ENV PYTHONUNBUFFERED=1
 
+# Create non-root user
+RUN groupadd -g 1000 appuser && \
+    useradd -u 1000 -g appuser -s /bin/sh -m appuser
+
 # get packages
 WORKDIR /shoppingassistantservice
 
@@ -37,8 +41,14 @@ COPY --from=builder /usr/local/lib/python3.14/ /usr/local/lib/python3.14/
 # Add the application
 COPY . .
 
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /shoppingassistantservice
+
 # set listen port
 ENV PORT "8080"
 EXPOSE 8080
+
+# Run as non-root user
+USER 1000
 
 ENTRYPOINT ["python", "shoppingassistantservice.py"]

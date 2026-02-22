@@ -38,4 +38,8 @@ COPY products.json .
 ENV GOTRACEBACK=single
 
 EXPOSE 3550
+
+# Run as non-root user (distroless nonroot user)
+USER 65532
+
 ENTRYPOINT ["/src/server"]

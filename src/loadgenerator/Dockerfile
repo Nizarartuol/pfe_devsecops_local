@@ -36,6 +36,10 @@ RUN apk update \
     && apk add --no-cache libstdc++ \
     && rm -rf /var/cache/apk/*
 
+# Create non-root user
+RUN addgroup -g 1000 appuser && \
+    adduser -u 1000 -G appuser -s /bin/sh -D appuser
+
 WORKDIR /loadgen
 
 COPY --from=builder /install /usr/local
@@ -43,10 +47,16 @@ COPY --from=builder /install /usr/local
 # Add application code.
 COPY locustfile.py .
 
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /loadgen
+
 # enable gevent support in debugger
 ENV GEVENT_SUPPORT=True
 
 # Set protocol to HTTPS by default for security (can be overridden to http for local dev)
 ENV PROTOCOL=https
+
+# Run as non-root user
+USER 1000
 
 ENTRYPOINT locust --host="${PROTOCOL}://${FRONTEND_ADDR}" --headless -u "${USERS:-10}" -r "${RATE:-1}" 2>&1

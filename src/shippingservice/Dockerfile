@@ -38,4 +38,8 @@ ENV APP_PORT=50051
 ENV GOTRACEBACK=single
 
 EXPOSE 50051
+
+# Run as non-root user (distroless nonroot user)
+USER 65532
+
 ENTRYPOINT ["/src/shippingservice"]

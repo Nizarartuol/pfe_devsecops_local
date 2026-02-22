@@ -38,4 +38,8 @@ COPY --from=builder /checkoutservice /src/checkoutservice
 ENV GOTRACEBACK=single
 
 EXPOSE 5050
+
+# Run as non-root user (distroless nonroot user)
+USER 65532
+
 ENTRYPOINT ["/src/checkoutservice"]
