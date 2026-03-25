@@ -42,7 +42,7 @@ spec:
                 - ALL
             privileged: false
             readOnlyRootFilesystem: true
-          image: registry.localhost:5000/checkoutservice:latest
+          image: registry.localhost:5000/checkoutservice:ccf2e78d28d5e97ae2f133cb9ee7eb7657b901f7
           ports:
           - containerPort: 5050
           readinessProbe:
