@@ -30,44 +30,40 @@ jobs:
           fi
           echo "✅ All required secrets are present."
 
-  # ─────────────────────────────────────────────────────────────────────────────
-  # 1. Security – Gitleaks + Trivy FS + Trivy image scan (frontend only, fast)
-  # ─────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. Security – Gitleaks + Trivy FS + Trivy image scan (frontend only, fast)
+# ─────────────────────────────────────────────────────────────────────────────
   security:
     runs-on: ubuntu-latest
     needs: check-secrets
     steps:
       - uses: actions/checkout@v4
 
-      # Secret leaks
+    # Secret leaks
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
         with:
           fail: true
 
-  # Filesystem vulnerability scan
-      - name: Setup Trivy
-        uses: aquasecurity/setup-trivy@v1
-        with:
-          version: 0.69.3
-
-      - name: Run Trivy FS Scan
-        uses: aquasecurity/trivy-action@v0.10.1
+    # Filesystem vulnerability scan with Trivy
+      - name: Trivy FS Scan
+        uses: aquasecurity/trivy-action@v2
         with:
           scan-type: fs
           scan-ref: ./services/pfe_devsecops/src
           severity: CRITICAL,HIGH
           exit-code: 1
 
-  # Build frontend image to scan it
+    # Build frontend image to scan it
       - name: Build frontend Docker image (for security scan)
         run: |
           docker build \
             -t ${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }} \
             ./services/pfe_devsecops/src/frontend
 
-      - name: Run Trivy Image Scan (frontend)
-        uses: aquasecurity/trivy-action@v0.10.1
+    # Trivy image scan (frontend)
+      - name: Trivy Image Scan (frontend)
+        uses: aquasecurity/trivy-action@v2
         with:
           image-ref: ${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }}
           severity: CRITICAL,HIGH
