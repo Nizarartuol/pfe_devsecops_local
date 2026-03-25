@@ -92,7 +92,7 @@ jobs:
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v3.0.0
         with:
-          projectBaseDir: ./services/pfe_devsecops
+          projectBaseDir: ./services/pfe_devsecops   # <- assure-toi que ce chemin existe après checkout
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
