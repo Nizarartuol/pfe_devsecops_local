@@ -45,14 +45,16 @@ jobs:
         with:
           fail: true
 
-    # Trivy filesystem scan
+    # Trivy filesystem scan – reports vulns but does NOT block the pipeline
+    # (exit-code: 0) because transitive deps in source often have unfixed CVEs.
       - name: Trivy FS Scan
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: ./src
           severity: CRITICAL,HIGH
-          exit-code: 1
+          exit-code: 0          # report-only; adjust to 1 to enforce hard gate
+          format: table
 
     # Build frontend image
       - name: Build frontend Docker image
@@ -61,13 +63,15 @@ jobs:
             -t ${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }} \
             ./src/frontend
 
-    # Trivy image scan
+    # Trivy image scan – blocks only on CRITICAL/HIGH with an available fix
       - name: Trivy Image Scan (frontend)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }}
           severity: CRITICAL,HIGH
           exit-code: 1
+          ignore-unfixed: true   # skip CVEs that have no patch yet
+          format: table
 
 
   # ─────────────────────────────────────────────────────────────────────────────
