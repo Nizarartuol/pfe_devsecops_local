@@ -90,7 +90,7 @@ jobs:
 
       # ── SonarCloud (always runs) ───────────────────────────────────────────
       - name: Vérifier le contenu du repo
-        run: ls -R ./services/pfe_devsecops
+        run: ls -R .
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v3.0.0
         with:
