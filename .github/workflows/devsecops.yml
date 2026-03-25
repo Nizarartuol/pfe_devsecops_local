@@ -181,7 +181,12 @@ jobs:
             echo "══════════════════════════════════════"
             echo "▶ Building  $REGISTRY/$svc:$TAG"
             echo "══════════════════════════════════════"
-            docker build -t "$REGISTRY/$svc:$TAG" "$SRC_BASE/$svc"
+            if [ "$svc" = "cartservice" ]; then
+              BUILD_CTX="$SRC_BASE/$svc/src"
+            else
+              BUILD_CTX="$SRC_BASE/$svc"
+            fi
+            docker build -t "$REGISTRY/$svc:$TAG" "$BUILD_CTX"
 
             echo "▶ Pushing   $REGISTRY/$svc:$TAG  (with retry)"
             for attempt in 1 2 3; do
