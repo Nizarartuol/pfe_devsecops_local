@@ -12,6 +12,9 @@ env:
   # All microservices to build/scan
   SERVICES: "frontend adservice cartservice checkoutservice currencyservice emailservice paymentservice productcatalogservice recommendationservice shippingservice loadgenerator"
 
+permissions:
+  contents: write
+
 jobs:
   # ─────────────────────────────────────────────────────────────────────────────
   # 0. Secret guard – fail fast if required secrets are missing
