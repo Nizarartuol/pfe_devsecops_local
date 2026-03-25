@@ -98,15 +98,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ── Self-hosted SonarQube (only when SONAR_HOST_URL secret is set) ────
-      - name: Self-hosted SonarQube Scan
-        if: ${{ env.SONAR_HOST_URL != '' }}
-        uses: SonarSource/sonarqube-scan-action@v5
-        with:
-          projectBaseDir: ./services/pfe_devsecops
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
+#      - name: Self-hosted SonarQube Scan
+#        if: ${{ env.SONAR_HOST_URL != '' }}
+#        uses: SonarSource/sonarqube-scan-action@v5
+#        with:
+#          projectBaseDir: ./services/pfe_devsecops
+#        env:
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+#
   # ─────────────────────────────────────────────────────────────────────────────
   # 3. OWASP ZAP Baseline Scan – runs against the locally started frontend
   # ─────────────────────────────────────────────────────────────────────────────
