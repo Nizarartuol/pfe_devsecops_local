@@ -165,6 +165,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The GitHub runner needs a local registry running on port 5000
+      # otherwise the push to registry.localhost:5000 will fail with connection refused.
+      - name: Start local Docker registry
+        run: docker run -d -p 5000:5000 --name registry registry:2
+
       - name: Build, push, and Trivy-scan all services
         run: |
           SRC_BASE="./src"
