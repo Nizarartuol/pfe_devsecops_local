@@ -45,16 +45,21 @@ jobs:
         with:
           fail: true
 
-      # Filesystem vulnerability scan
+  # Filesystem vulnerability scan
+      - name: Setup Trivy
+        uses: aquasecurity/setup-trivy@v1
+        with:
+          version: 0.69.3
+
       - name: Run Trivy FS Scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.10.1
         with:
           scan-type: fs
           scan-ref: ./services/pfe_devsecops/src
           severity: CRITICAL,HIGH
           exit-code: 1
 
-      # Build frontend image to scan it
+  # Build frontend image to scan it
       - name: Build frontend Docker image (for security scan)
         run: |
           docker build \
@@ -62,7 +67,7 @@ jobs:
             ./services/pfe_devsecops/src/frontend
 
       - name: Run Trivy Image Scan (frontend)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.10.1
         with:
           image-ref: ${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }}
           severity: CRITICAL,HIGH
