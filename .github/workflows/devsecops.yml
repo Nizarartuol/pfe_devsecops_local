@@ -50,7 +50,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
-          scan-ref: ./services/pfe_devsecops/src
+          scan-ref: ./src
           severity: CRITICAL,HIGH
           exit-code: 1
 
@@ -59,7 +59,7 @@ jobs:
         run: |
           docker build \
             -t ${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }} \
-            ./services/pfe_devsecops/src/frontend
+            ./src/frontend
 
     # Trivy image scan
       - name: Trivy Image Scan (frontend)
@@ -124,7 +124,7 @@ jobs:
         run: |
           docker build \
             -t app-test \
-            ./services/pfe_devsecops/src/frontend
+            ./src/frontend
           docker run -d -p 8080:8080 --name frontend-zap app-test
           echo "Waiting for frontend to be ready…"
           for i in $(seq 1 12); do
@@ -163,7 +163,7 @@ jobs:
 
       - name: Build, push, and Trivy-scan all services
         run: |
-          SRC_BASE="./services/pfe_devsecops/src"
+          SRC_BASE="./src"
           REGISTRY="${{ env.REGISTRY }}"
           TAG="${{ env.IMAGE_TAG }}"
           SERVICES="${{ env.SERVICES }}"
