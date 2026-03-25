@@ -31,4 +31,40 @@ components:
 # These must be run last and in this order
 # - components/container-images-tag
 # - components/container-images-tag-suffix
-# - components/container-images-registry
+- components/container-images-registry
+
+# Override image repository to use local k3d registry
+images:
+- name: adservice
+  newName: registry.localhost:5000/adservice
+  newTag: latest
+- name: cartservice
+  newName: registry.localhost:5000/cartservice
+  newTag: latest
+- name: checkoutservice
+  newName: registry.localhost:5000/checkoutservice
+  newTag: latest
+- name: currencyservice
+  newName: registry.localhost:5000/currencyservice
+  newTag: latest
+- name: emailservice
+  newName: registry.localhost:5000/emailservice
+  newTag: latest
+- name: frontend
+  newName: registry.localhost:5000/frontend
+  newTag: latest
+- name: loadgenerator
+  newName: registry.localhost:5000/loadgenerator
+  newTag: latest
+- name: paymentservice
+  newName: registry.localhost:5000/paymentservice
+  newTag: latest
+- name: productcatalogservice
+  newName: registry.localhost:5000/productcatalogservice
+  newTag: latest
+- name: recommendationservice
+  newName: registry.localhost:5000/recommendationservice
+  newTag: latest
+- name: shippingservice
+  newName: registry.localhost:5000/shippingservice
+  newTag: latest

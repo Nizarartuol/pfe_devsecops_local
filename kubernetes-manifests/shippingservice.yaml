@@ -42,7 +42,7 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: shippingservice
+        image: registry.localhost:5000/shippingservice:latest
         ports:
         - containerPort: 50051
         env:

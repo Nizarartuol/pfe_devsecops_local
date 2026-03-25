@@ -43,12 +43,14 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: adservice
+        image: registry.localhost:5000/adservice:latest
         ports:
         - containerPort: 9555
         env:
         - name: PORT
           value: "9555"
+        - name: PRODUCT_CATALOG_SERVICE_ADDR
+          value: "productcatalogservice.dev.svc.cluster.local:3550"
         resources:
           requests:
             cpu: 200m

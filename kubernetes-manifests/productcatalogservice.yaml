@@ -43,7 +43,7 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: productcatalogservice
+        image: registry.localhost:5000/productcatalogservice:latest
         ports:
         - containerPort: 3550
         env:

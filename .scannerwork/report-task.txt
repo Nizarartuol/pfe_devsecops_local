@@ -1,0 +1,6 @@
+projectKey=pfe_devsecops_local
+serverUrl=http://localhost:9000
+serverVersion=26.3.0.120487
+dashboardUrl=http://localhost:9000/dashboard?id=pfe_devsecops_local
+ceTaskId=e5753b59-6638-43ed-aadb-da54afba6b78
+ceTaskUrl=http://localhost:9000/api/ce/task?id=e5753b59-6638-43ed-aadb-da54afba6b78

@@ -44,7 +44,7 @@ spec:
                 - ALL
             privileged: false
             readOnlyRootFilesystem: true
-          image: frontend
+          image: registry.localhost:5000/frontend:latest
           ports:
           - containerPort: 8080
           readinessProbe:
@@ -124,6 +124,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend-external
+  namespace: dev
   labels:
     app: frontend
 spec:
@@ -132,8 +133,8 @@ spec:
     app: frontend
   ports:
   - name: http
-    port: 80
-    targetPort: 8080
+    port: 80        # port exposé à l'extérieur
+    targetPort: 8080  # port du pod
 ---
 apiVersion: v1
 kind: ServiceAccount

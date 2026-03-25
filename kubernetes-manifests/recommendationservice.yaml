@@ -43,7 +43,7 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: recommendationservice
+        image: registry.localhost:5000/recommendationservice:latest
         ports:
         - containerPort: 8080
         readinessProbe:

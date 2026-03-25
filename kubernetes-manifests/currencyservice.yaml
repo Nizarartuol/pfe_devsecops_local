@@ -43,7 +43,7 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: currencyservice
+        image: registry.localhost:5000/currencyservice:latest
         ports:
         - name: grpc
           containerPort: 7000

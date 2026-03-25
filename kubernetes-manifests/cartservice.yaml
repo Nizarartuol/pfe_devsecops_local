@@ -43,7 +43,7 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: cartservice
+        image: registry.localhost:5000/cartservice:latest
         ports:
         - containerPort: 7070
         env:
