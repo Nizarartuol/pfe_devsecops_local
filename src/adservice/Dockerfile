@@ -27,7 +27,7 @@ RUN ./gradlew installDist
 
 FROM eclipse-temurin:25.0.1_8-jre-alpine@sha256:9c65fe190cb22ba92f50b8d29a749d0f1cfb2437e09fe5fbf9ff927c45fc6e99
 
-RUN apk upgrade --no-cache libpng
+RUN apk upgrade --no-cache libpng expat
 
 # @TODO: https://github.com/GoogleCloudPlatform/microservices-demo/issues/2517
 # Download Stackdriver Profiler Java agent
