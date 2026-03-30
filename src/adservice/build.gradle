@@ -41,7 +41,9 @@ dependencies {
                 "io.grpc:grpc-services:${grpcVersion}",
                 "io.grpc:grpc-census:${grpcVersion}",
                 "org.apache.logging.log4j:log4j-core:2.25.3",
-                "com.google.protobuf:protobuf-java:${protocVersion}"
+                "com.google.protobuf:protobuf-java:${protocVersion}",
+                "io.netty:netty-codec-http:4.1.132.Final",
+                "io.netty:netty-codec-http2:4.1.132.Final"
 
         runtimeOnly "com.fasterxml.jackson.core:jackson-core:${jacksonCoreVersion}",
                 "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}",
