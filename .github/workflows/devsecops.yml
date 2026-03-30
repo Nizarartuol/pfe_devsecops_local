@@ -48,6 +48,16 @@ jobs:
         with:
           fail: true
 
+    # Regenerate go.sum files to match updated go.mod dependency versions
+      - name: Update Go module checksums
+        run: |
+          for svc in checkoutservice productcatalogservice shippingservice frontend; do
+            if [ -f "./src/$svc/go.mod" ]; then
+              echo "Running go mod tidy for $svc..."
+              (cd ./src/$svc && go mod tidy)
+            fi
+          done
+
     # Trivy filesystem scan – reports vulns but does NOT block the pipeline
     # (exit-code: 0) because transitive deps in source often have unfixed CVEs.
       - name: Trivy FS Scan
