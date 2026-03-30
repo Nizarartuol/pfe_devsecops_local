@@ -24,7 +24,7 @@ from flask import Flask, request
 
 from langchain_google_alloydb_pg import AlloyDBEngine, AlloyDBVectorStore
 
-PROJECT_ID = os.environ["PROJECT_ID"]
+PROJECT_ID = os.getenv("PROJECT_ID", "dev-project")
 REGION = os.environ["REGION"]
 ALLOYDB_DATABASE_NAME = os.environ["ALLOYDB_DATABASE_NAME"]
 ALLOYDB_TABLE_NAME = os.environ["ALLOYDB_TABLE_NAME"]

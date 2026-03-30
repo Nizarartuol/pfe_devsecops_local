@@ -46,6 +46,8 @@ spec:
         ports:
         - containerPort: 5050
         env:
+        - name: PROJECT_ID
+          value: "dev-project"
         - name: PORT
           value: "5050"
         - name: DISABLE_PROFILER

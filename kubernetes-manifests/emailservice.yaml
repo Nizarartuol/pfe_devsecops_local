@@ -51,14 +51,22 @@ spec:
           value: "8080"
         - name: DISABLE_PROFILER
           value: "1"
-        readinessProbe:
-          periodSeconds: 5
-          grpc:
-            port: 8080
         livenessProbe:
-          periodSeconds: 5
-          grpc:
+          httpGet:
+            path: /
             port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 5
         resources:
           requests:
             cpu: 100m
