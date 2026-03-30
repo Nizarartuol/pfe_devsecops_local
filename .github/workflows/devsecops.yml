@@ -56,7 +56,8 @@ jobs:
           scan-type: fs
           scan-ref: ./src
           severity: CRITICAL,HIGH
-          exit-code: 0          # report-only; adjust to 1 to enforce hard gate
+          exit-code: 1
+          ignore-unfixed: true
           format: table
 
     # Build frontend image
@@ -210,12 +211,9 @@ jobs:
               -v /var/run/docker.sock:/var/run/docker.sock \
               aquasec/trivy:0.48.0 image \
               --severity CRITICAL,HIGH \
-              --exit-code 0 \
+              --exit-code 1 \
               --ignore-unfixed \
-              "$REGISTRY/$svc:$TAG" || {
-                echo "❌ Trivy scan failed conceptually? Continuing anyway."
-
-              }
+              "$REGISTRY/$svc:$TAG"
 
             echo "✅ $svc done."
           done
@@ -230,9 +228,9 @@ jobs:
       - name: Checkout GitOps repo
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository }}
+          repository: Nizarartuol/pfe-devsecops-gitops
           path: gitops-repo
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITOPS_TOKEN }}
 
       - name: Update image tags in Kubernetes manifests
         run: |
