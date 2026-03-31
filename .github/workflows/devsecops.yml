@@ -89,7 +89,7 @@ jobs:
 
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # 2. SonarQube – SonarCloud (always) + self-hosted (if SONAR_HOST_URL is set)
+  # 2. SonarQube – SonarCloud (always) + self-hosted 
   # ─────────────────────────────────────────────────────────────────────────────
   sonar:
     runs-on: ubuntu-latest
@@ -244,13 +244,13 @@ jobs:
 
       - name: Update image tags in Kubernetes manifests
         run: |
-          MANIFESTS_DIR="gitops-repo/kubernetes-manifests"
+          MANIFESTS_DIR="gitops-repo/apps"
           REGISTRY="${{ env.REGISTRY }}"
           TAG="${{ env.IMAGE_TAG }}"
           SERVICES="${{ env.SERVICES }}"
 
           for svc in $SERVICES; do
-            FILE="$MANIFESTS_DIR/${svc}.yaml"
+            FILE="$MANIFESTS_DIR/$svc/deployment.yaml"
             if [ -f "$FILE" ]; then
               sed -i "s|image: $REGISTRY/$svc:.*|image: $REGISTRY/$svc:$TAG|g" "$FILE"
               echo "✅ Updated $FILE"
@@ -264,7 +264,7 @@ jobs:
           cd gitops-repo
           git config user.name  "GitHub Actions"
           git config user.email "actions@github.com"
-          git add kubernetes-manifests/
+          git add apps/
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
