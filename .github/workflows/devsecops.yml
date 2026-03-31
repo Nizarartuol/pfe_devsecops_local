@@ -252,7 +252,7 @@ jobs:
           for svc in $SERVICES; do
             FILE="$MANIFESTS_DIR/$svc/deployment.yaml"
             if [ -f "$FILE" ]; then
-              sed -i "s|image: $REGISTRY/$svc:.*|image: $REGISTRY/$svc:$TAG|g" "$FILE"
+              sed -i "s|image:.*$svc:.*|image: $REGISTRY/$svc:$TAG|g" "$FILE"
               echo "✅ Updated $FILE"
             else
               echo "⚠️  $FILE not found – skipping"
