@@ -57,12 +57,16 @@ spec:
             cpu: 300m
             memory: 128Mi
         readinessProbe:
-          initialDelaySeconds: 15
+          initialDelaySeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 5
           grpc:
             port: 7070
         livenessProbe:
-          initialDelaySeconds: 15
+          initialDelaySeconds: 20
           periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
           grpc:
             port: 7070
 ---
@@ -119,11 +123,17 @@ spec:
         ports:
         - containerPort: 6379
         readinessProbe:
+          initialDelaySeconds: 20
           periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 5
           tcpSocket:
             port: 6379
         livenessProbe:
+          initialDelaySeconds: 20
           periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 5
           tcpSocket:
             port: 6379
         volumeMounts:

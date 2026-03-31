@@ -52,19 +52,17 @@ spec:
         - name: DISABLE_PROFILER
           value: "1"
         livenessProbe:
-          httpGet:
-            path: /
+          tcpSocket:
             port: 8080
           initialDelaySeconds: 20
-          periodSeconds: 10
+          periodSeconds: 15
           timeoutSeconds: 5
           failureThreshold: 5
         readinessProbe:
-          httpGet:
-            path: /
+          tcpSocket:
             port: 8080
-          initialDelaySeconds: 10
-          periodSeconds: 5
+          initialDelaySeconds: 20
+          periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 5
         resources:
