@@ -7,7 +7,7 @@ on:
   pull_request:
 
 env:
-  REGISTRY: registry.localhost:5000
+  REGISTRY: ghcr.io/nizarartuol
   IMAGE_TAG: ${{ github.sha }}
   # All microservices to build/scan
   SERVICES: "frontend adservice cartservice checkoutservice currencyservice emailservice paymentservice productcatalogservice recommendationservice shippingservice loadgenerator"
@@ -179,10 +179,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The GitHub runner needs a local registry running on port 5000
-      # otherwise the push to registry.localhost:5000 will fail with connection refused.
-      - name: Start local Docker registry
-        run: docker run -d -p 5000:5000 --name registry registry:2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
 
       - name: Build, push, and Trivy-scan all services
         run: |
