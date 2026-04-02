@@ -1,4 +1,8 @@
 .DS_Store
+.env*
+kubeconfig.yaml
+*.pem
+*.key
 .eclipse.buildship.core.prefs
 .gradle/
 .idea/
