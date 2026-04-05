@@ -70,6 +70,32 @@ jobs:
           ignore-unfixed: true
           format: table
 
+    # SAST: Semgrep Scan
+      - name: Semgrep Scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: "p/default"
+        continue-on-error: true
+
+    # SCA: NPM Audit
+      - name: NPM Audit
+        continue-on-error: true
+        run: |
+          find ./src -name "package.json" -type f -exec dirname {} \; | while read dir; do
+            echo "Running npm audit in $dir..."
+            (cd "$dir" && npm install --package-lock-only --ignore-scripts && npm audit --audit-level=high || true)
+          done
+
+    # SCA: Pip Audit
+      - name: Pip Audit
+        continue-on-error: true
+        run: |
+          pip install pip-audit
+          find ./src -name "requirements.txt" -type f | while read req; do
+            echo "Running pip-audit on $req..."
+            pip-audit -r "$req" || true
+          done
+
     # Build frontend image
       - name: Build frontend Docker image
         run: |
