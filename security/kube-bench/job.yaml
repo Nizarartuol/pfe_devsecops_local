@@ -2,24 +2,23 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: kube-bench
-  namespace: security
+  namespace: dev
   labels:
     app: kube-bench
     purpose: cis-benchmark-audit
 spec:
   template:
+    metadata:
+      labels:
+        app: kube-bench
     spec:
       hostPID: true
-      nodeSelector:
-        node-role.kubernetes.io/control-plane: ""
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          effect: NoSchedule
       serviceAccountName: kube-bench
+      restartPolicy: Never
       containers:
         - name: kube-bench
           image: aquasec/kube-bench:v0.7.3
-          command: ["kube-bench", "--json"]
+          command: ["kube-bench"]
           volumeMounts:
             - name: var-lib-etcd
               mountPath: /var/lib/etcd
@@ -33,7 +32,6 @@ spec:
             - name: etc-systemd
               mountPath: /etc/systemd
               readOnly: true
-      restartPolicy: Never
       volumes:
         - name: var-lib-etcd
           hostPath:
