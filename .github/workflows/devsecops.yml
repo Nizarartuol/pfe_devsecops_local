@@ -52,9 +52,9 @@ jobs:
       - name: Update Go module checksums
         run: |
           for svc in checkoutservice productcatalogservice shippingservice frontend; do
-            if [ -f "./src/$svc/go.mod" ]; then
+            if [ -f "./services/pfe_devsecops/src/$svc/go.mod" ]; then
               echo "Running go mod tidy for $svc..."
-              (cd ./src/$svc && go mod tidy)
+              (cd ./services/pfe_devsecops/src/$svc && go mod tidy)
             fi
           done
 
@@ -64,7 +64,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
-          scan-ref: ./src
+          scan-ref: ./services/pfe_devsecops/src
           severity: CRITICAL,HIGH
           exit-code: 1
           ignore-unfixed: true
@@ -81,7 +81,7 @@ jobs:
       - name: NPM Audit
         continue-on-error: true
         run: |
-          find ./src -name "package.json" -type f -exec dirname {} \; | while read dir; do
+          find ./services/pfe_devsecops/src -name "package.json" -type f -exec dirname {} \; | while read dir; do
             echo "Running npm audit in $dir..."
             (cd "$dir" && npm install --package-lock-only --ignore-scripts && npm audit --audit-level=high || true)
           done
@@ -91,7 +91,7 @@ jobs:
         continue-on-error: true
         run: |
           pip install pip-audit
-          find ./src -name "requirements.txt" -type f | while read req; do
+          find ./services/pfe_devsecops/src -name "requirements.txt" -type f | while read req; do
             echo "Running pip-audit on $req..."
             pip-audit -r "$req" || true
           done
@@ -101,7 +101,7 @@ jobs:
         run: |
           docker build \
             -t ${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }} \
-            ./src/frontend
+            ./services/pfe_devsecops/src/frontend
 
     # Trivy image scan – blocks only on CRITICAL/HIGH with an available fix
       - name: Trivy Image Scan (frontend)
@@ -140,7 +140,7 @@ jobs:
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v3.0.0
         with:
-          projectBaseDir: .   # <- assure-toi que ce chemin existe après checkout
+          projectBaseDir: services/pfe_devsecops   # <- assure-toi que ce chemin existe après checkout
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -168,7 +168,7 @@ jobs:
         run: |
           docker build \
             -t app-test \
-            ./src/frontend
+            ./services/pfe_devsecops/src/frontend
           docker run -d -p 8080:8080 --name frontend-zap app-test
           echo "Waiting for frontend to be ready…"
           for i in $(seq 1 12); do
@@ -214,7 +214,7 @@ jobs:
 
       - name: Build, push, and Trivy-scan all services
         run: |
-          SRC_BASE="./src"
+          SRC_BASE="./services/pfe_devsecops/src"
           REGISTRY="${{ env.REGISTRY }}"
           TAG="${{ env.IMAGE_TAG }}"
           SERVICES="${{ env.SERVICES }}"

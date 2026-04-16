@@ -1,0 +1,35 @@
+driver:
+  kind: ebpf
+
+falco:
+  grpc:
+    enabled: true
+  grpcOutput:
+    enabled: true
+  jsonOutput: true
+  jsonIncludeOutputProperty: true
+  logLevel: info
+  priority: debug
+  bufferedOutputs: false
+  outputs:
+    rate: 100
+    maxBurst: 1000
+
+falcoctl:
+  artifact:
+    install:
+      enabled: true
+    follow:
+      enabled: true
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+tolerations:
+  - effect: NoSchedule
+    operator: Exists

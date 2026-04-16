@@ -1,0 +1,42 @@
+# values for kube-prometheus-stack
+# https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
+
+# Grafana configuration
+grafana:
+  enabled: true
+  adminPassword: "admin"   # Change in production
+  service:
+    type: NodePort
+    nodePort: 32000
+  ingress:
+    enabled: false
+  persistence:
+    enabled: false
+
+# Prometheus configuration
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    resources:
+      requests:
+        memory: 400Mi
+        cpu: 200m
+      limits:
+        memory: 800Mi
+        cpu: 500m
+    # Scrape all namespaces
+    ruleNamespaceSelector: {}
+    serviceMonitorNamespaceSelector: {}
+    podMonitorNamespaceSelector: {}
+
+# AlertManager – disabled for local dev (enable when needed)
+alertmanager:
+  enabled: false
+
+# Node exporter
+nodeExporter:
+  enabled: true
+
+# kube-state-metrics
+kubeStateMetrics:
+  enabled: true

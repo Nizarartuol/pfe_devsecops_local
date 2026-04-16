@@ -1,0 +1,18 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequireLabels
+metadata:
+  name: require-security-labels
+  annotations:
+    description: "Labels app, version et team obligatoires sur tous les Pods"
+spec:
+  enforcementAction: warn
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    namespaces: ["dev", "prod"]
+  parameters:
+    labels:
+      - "app"
+      - "version"
+      - "team"

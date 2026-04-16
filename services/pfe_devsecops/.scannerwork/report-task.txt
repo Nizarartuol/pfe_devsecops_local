@@ -1,0 +1,6 @@
+projectKey=Nizarartuol_pfe_devsecops_local
+serverUrl=http://localhost:9000
+serverVersion=26.3.0.120487
+dashboardUrl=http://localhost:9000/dashboard?id=Nizarartuol_pfe_devsecops_local
+ceTaskId=b299c0ea-f6b0-483f-a3a5-17fb8e9d4197
+ceTaskUrl=http://localhost:9000/api/ce/task?id=b299c0ea-f6b0-483f-a3a5-17fb8e9d4197
