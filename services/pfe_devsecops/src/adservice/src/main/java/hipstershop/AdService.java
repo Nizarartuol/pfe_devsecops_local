@@ -26,13 +26,13 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.StatusRuntimeException;
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
-import io.grpc.services.*;
+import io.grpc.protobuf.services.HealthStatusManager;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Random;
+import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -60,7 +60,7 @@ public final class AdService {
             .addService(healthMgr.getHealthService())
             .build()
             .start();
-    logger.info("Ad Service started, listening on " + port);
+    logger.info("Ad Service started, listening on {}", port);
     Runtime.getRuntime()
         .addShutdownHook(
             new Thread(
@@ -95,7 +95,7 @@ public final class AdService {
       AdService service = AdService.getInstance();
       try {
         List<Ad> allAds = new ArrayList<>();
-        logger.info("received ad request (context_words=" + req.getContextKeysList() + ")");
+        logger.info("received ad request (context_words={})", req.getContextKeysList());
         if (req.getContextKeysCount() > 0) {
           for (int i = 0; i < req.getContextKeysCount(); i++) {
             Collection<Ad> ads = service.getAdsByCategory(req.getContextKeys(i));
@@ -124,7 +124,7 @@ public final class AdService {
     return adsMap.get(category);
   }
 
-  private static final Random random = new Random();
+  private static final SecureRandom random = new SecureRandom();
 
   private List<Ad> getRandomAds() {
     List<Ad> ads = new ArrayList<>(MAX_ADS_TO_SERVE);
