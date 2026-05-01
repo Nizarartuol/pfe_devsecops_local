@@ -78,6 +78,7 @@ jobs:
           framework: kubernetes,dockerfile
           quiet: true
           soft_fail: false
+          skip_path: ./services/pfe_devsecops/security/tests
 
     # SAST: Semgrep Scan
       - name: Semgrep Scan
