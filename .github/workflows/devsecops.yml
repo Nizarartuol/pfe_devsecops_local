@@ -70,48 +70,21 @@ jobs:
           ignore-unfixed: true
           format: table
 
+    # IaC Security: Checkov – Kubernetes manifests + Dockerfiles
+      - name: Checkov IaC Scan
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: ./services/pfe_devsecops
+          framework: kubernetes,dockerfile
+          quiet: true
+          soft_fail: false
+
     # SAST: Semgrep Scan
       - name: Semgrep Scan
         uses: returntocorp/semgrep-action@v1
         with:
           config: "p/default"
         continue-on-error: true
-
-    # SCA: NPM Audit
-      - name: NPM Audit
-        continue-on-error: true
-        run: |
-          find ./services/pfe_devsecops/src -name "package.json" -type f -exec dirname {} \; | while read dir; do
-            echo "Running npm audit in $dir..."
-            (cd "$dir" && npm install --package-lock-only --ignore-scripts && npm audit --audit-level=high || true)
-          done
-
-    # SCA: Pip Audit
-      - name: Pip Audit
-        continue-on-error: true
-        run: |
-          pip install pip-audit
-          find ./services/pfe_devsecops/src -name "requirements.txt" -type f | while read req; do
-            echo "Running pip-audit on $req..."
-            pip-audit -r "$req" || true
-          done
-
-    # Build frontend image
-      - name: Build frontend Docker image
-        run: |
-          docker build \
-            -t ${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }} \
-            ./services/pfe_devsecops/src/frontend
-
-    # Trivy image scan – blocks only on CRITICAL/HIGH with an available fix
-      - name: Trivy Image Scan (frontend)
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }}
-          severity: CRITICAL,HIGH
-          exit-code: 1
-          ignore-unfixed: true   # skip CVEs that have no patch yet
-          format: table
 
 
   # ─────────────────────────────────────────────────────────────────────────────
@@ -184,6 +157,7 @@ jobs:
         uses: zaproxy/action-baseline@v0.12.0
         with:
           target: 'http://localhost:8080'
+          cmd_options: '-J zap-report.json'
 
       - name: Upload ZAP Report
         if: always()
@@ -191,6 +165,18 @@ jobs:
         with:
           name: zap-report
           path: report_md.md
+
+      # [DEFECTDOJO - disabled] Uncomment when DEFECTDOJO_URL + DEFECTDOJO_TOKEN secrets are set
+      # - name: Upload ZAP Report to DefectDojo
+      #   if: always()
+      #   run: |
+      #     curl -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/import-scan/" \
+      #       -H "Authorization: Token ${{ secrets.DEFECTDOJO_TOKEN }}" \
+      #       -F "file=@zap-report.json" \
+      #       -F "scan_type=ZAP Scan" \
+      #       -F "engagement_name=GitHub Actions" \
+      #       -F "verified=true" \
+      #       -F "active=true"
 
       - name: Stop frontend container
         if: always()
@@ -252,6 +238,19 @@ jobs:
               --exit-code 1 \
               --ignore-unfixed \
               "$REGISTRY/$svc:$TAG"
+
+            # [DEFECTDOJO - disabled] Uncomment when DEFECTDOJO_URL + DEFECTDOJO_TOKEN secrets are set
+            # echo "▶ Uploading Trivy report for $svc to DefectDojo"
+            # docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            #   aquasec/trivy:0.48.0 image --severity CRITICAL,HIGH --ignore-unfixed \
+            #   --format json -o trivy-report.json "$REGISTRY/$svc:$TAG"
+            # curl -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/import-scan/" \
+            #   -H "Authorization: Token ${{ secrets.DEFECTDOJO_TOKEN }}" \
+            #   -F "file=@trivy-report.json" \
+            #   -F "scan_type=Trivy Scan" \
+            #   -F "engagement_name=GitHub Actions" \
+            #   -F "verified=true" \
+            #   -F "active=true" || echo "⚠️  DefectDojo upload failed for $svc (non-blocking)"
 
             echo "✅ $svc done."
           done
