@@ -1,3 +1,4 @@
+# checkov:skip=CKV_DOCKER_2: Kubernetes manages health probes natively
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,3 +71,4 @@ ENV PROTOCOL=https
 USER 1000
 
 ENTRYPOINT locust --host="${PROTOCOL}://${FRONTEND_ADDR}" --headless -u "${USERS:-10}" -r "${RATE:-1}" 2>&1
+

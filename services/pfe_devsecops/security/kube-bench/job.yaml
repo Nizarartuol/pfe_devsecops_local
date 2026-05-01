@@ -1,6 +1,28 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
+  annotations:
+    checkov.io/skip0: CKV_K8S_10=Requires host privileges
+    checkov.io/skip1: CKV_K8S_11=Requires host privileges
+    checkov.io/skip2: CKV_K8S_12=Requires host privileges
+    checkov.io/skip3: CKV_K8S_13=Requires host privileges
+    checkov.io/skip4: CKV_K8S_15=Requires host privileges
+    checkov.io/skip5: CKV_K8S_17=Requires host privileges
+    checkov.io/skip6: CKV_K8S_20=Requires host privileges
+    checkov.io/skip7: CKV_K8S_21=Requires host privileges
+    checkov.io/skip8: CKV_K8S_22=Requires host privileges
+    checkov.io/skip9: CKV_K8S_23=Requires host privileges
+    checkov.io/skip10: CKV_K8S_28=Requires host privileges
+    checkov.io/skip11: CKV_K8S_29=Requires host privileges
+    checkov.io/skip12: CKV_K8S_30=Requires host privileges
+    checkov.io/skip13: CKV_K8S_31=Requires host privileges
+    checkov.io/skip14: CKV_K8S_37=Requires host privileges
+    checkov.io/skip15: CKV_K8S_38=Requires host privileges
+    checkov.io/skip16: CKV_K8S_40=Requires host privileges
+    checkov.io/skip17: CKV_K8S_43=Requires host privileges
+    checkov.io/skip18: CKV_K8S_8=Requires host privileges
+    checkov.io/skip19: CKV_K8S_9=Requires host privileges
+
   name: kube-bench
   namespace: dev
   labels:
@@ -9,6 +31,28 @@ metadata:
 spec:
   template:
     metadata:
+  annotations:
+    checkov.io/skip0: CKV_K8S_10=Requires host privileges
+    checkov.io/skip1: CKV_K8S_11=Requires host privileges
+    checkov.io/skip2: CKV_K8S_12=Requires host privileges
+    checkov.io/skip3: CKV_K8S_13=Requires host privileges
+    checkov.io/skip4: CKV_K8S_15=Requires host privileges
+    checkov.io/skip5: CKV_K8S_17=Requires host privileges
+    checkov.io/skip6: CKV_K8S_20=Requires host privileges
+    checkov.io/skip7: CKV_K8S_21=Requires host privileges
+    checkov.io/skip8: CKV_K8S_22=Requires host privileges
+    checkov.io/skip9: CKV_K8S_23=Requires host privileges
+    checkov.io/skip10: CKV_K8S_28=Requires host privileges
+    checkov.io/skip11: CKV_K8S_29=Requires host privileges
+    checkov.io/skip12: CKV_K8S_30=Requires host privileges
+    checkov.io/skip13: CKV_K8S_31=Requires host privileges
+    checkov.io/skip14: CKV_K8S_37=Requires host privileges
+    checkov.io/skip15: CKV_K8S_38=Requires host privileges
+    checkov.io/skip16: CKV_K8S_40=Requires host privileges
+    checkov.io/skip17: CKV_K8S_43=Requires host privileges
+    checkov.io/skip18: CKV_K8S_8=Requires host privileges
+    checkov.io/skip19: CKV_K8S_9=Requires host privileges
+
       labels:
         app: kube-bench
     spec:

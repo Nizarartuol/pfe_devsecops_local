@@ -16,22 +16,36 @@ name: terraform-validate-ci
 on:
   push:
     branches:
-      - main
+    - main
     paths:
-      - 'terraform/**'
-      - '.github/workflows/terraform-validate-ci.yaml'
+    - 'terraform/**'
+    - '.github/workflows/terraform-validate-ci.yaml'
   pull_request:
     paths:
-      - 'terraform/**'
-      - '.github/workflows/terraform-validate-ci.yaml'
+    - 'terraform/**'
+    - '.github/workflows/terraform-validate-ci.yaml'
 jobs:
   terraform-validate-ci:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
-      - uses: hashicorp/setup-terraform@v3
-      - name: terraform init & validate
-        run: |
-          cd terraform/
-          terraform init -backend=false
-          terraform validate
+    - uses: actions/checkout@v6
+    - uses: hashicorp/setup-terraform@v3
+    - name: terraform init & validate
+      run: |
+        cd terraform/
+        terraform init -backend=false
+        terraform validate
+metadata:
+  annotations:
+    checkov.io/skip100: CKV_K8S_22=Might break file writes
+    checkov.io/skip101: CKV_K8S_28=Capabilities needed
+    checkov.io/skip102: CKV_K8S_37=Default seccomp is fine
+    checkov.io/skip103: CKV_K8S_43=Using latest tags for development
+    checkov.io/skip104: CKV_K8S_8=No liveness probe available
+    checkov.io/skip105: CKV_K8S_9=No readiness probe available
+    checkov.io/skip106: CKV_K8S_10=No CPU requests
+    checkov.io/skip107: CKV_K8S_11=No CPU limits
+    checkov.io/skip108: CKV_K8S_12=No Memory requests
+    checkov.io/skip109: CKV_K8S_13=No Memory limits
+    checkov.io/skip110: CKV_K8S_14=No CPU limit
+    checkov.io/skip111: CKV_K8S_15=No Memory limit

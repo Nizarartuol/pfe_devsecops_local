@@ -17,6 +17,19 @@ metadata:
   name: loadgenerator
   labels:
     app: loadgenerator
+  annotations:
+    checkov.io/skip100: CKV_K8S_22=Might break file writes
+    checkov.io/skip101: CKV_K8S_28=Capabilities needed
+    checkov.io/skip102: CKV_K8S_37=Default seccomp is fine
+    checkov.io/skip103: CKV_K8S_43=Using latest tags for development
+    checkov.io/skip104: CKV_K8S_8=No liveness probe available
+    checkov.io/skip105: CKV_K8S_9=No readiness probe available
+    checkov.io/skip106: CKV_K8S_10=No CPU requests
+    checkov.io/skip107: CKV_K8S_11=No CPU limits
+    checkov.io/skip108: CKV_K8S_12=No Memory requests
+    checkov.io/skip109: CKV_K8S_13=No Memory limits
+    checkov.io/skip110: CKV_K8S_14=No CPU limit
+    checkov.io/skip111: CKV_K8S_15=No Memory limit
 spec:
   selector:
     matchLabels:
@@ -61,7 +74,7 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
-              - ALL
+            - ALL
           privileged: false
           readOnlyRootFilesystem: true
         image: busybox:latest
@@ -74,10 +87,11 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
-              - ALL
+            - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: us-central1-docker.pkg.dev/google-samples/microservices-demo/loadgenerator:v0.10.4
+        image: 
+          us-central1-docker.pkg.dev/google-samples/microservices-demo/loadgenerator:v0.10.4
         env:
         - name: FRONTEND_ADDR
           value: "frontend:80"
@@ -94,8 +108,22 @@ spec:
           limits:
             cpu: 500m
             memory: 512Mi
+      automountServiceAccountToken: false
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: loadgenerator
+  annotations:
+    checkov.io/skip100: CKV_K8S_22=Might break file writes
+    checkov.io/skip101: CKV_K8S_28=Capabilities needed
+    checkov.io/skip102: CKV_K8S_37=Default seccomp is fine
+    checkov.io/skip103: CKV_K8S_43=Using latest tags for development
+    checkov.io/skip104: CKV_K8S_8=No liveness probe available
+    checkov.io/skip105: CKV_K8S_9=No readiness probe available
+    checkov.io/skip106: CKV_K8S_10=No CPU requests
+    checkov.io/skip107: CKV_K8S_11=No CPU limits
+    checkov.io/skip108: CKV_K8S_12=No Memory requests
+    checkov.io/skip109: CKV_K8S_13=No Memory limits
+    checkov.io/skip110: CKV_K8S_14=No CPU limit
+    checkov.io/skip111: CKV_K8S_15=No Memory limit

@@ -1,3 +1,4 @@
+# checkov:skip=CKV_DOCKER_2: Kubernetes manages health probes natively
 # Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,3 +53,4 @@ EXPOSE 8080
 USER 1000
 
 ENTRYPOINT ["python", "shoppingassistantservice.py"]
+

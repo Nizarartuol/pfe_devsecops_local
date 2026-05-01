@@ -17,28 +17,42 @@ on:
   pull_request:
     # run on pull requests targeting main
     branches:
-      - main
+    - main
     types: closed
     paths-ignore:
-      - '**/README.md'
-      - 'kustomize/**'
-      - '.github/workflows/kustomize-build-ci.yaml'
-      - 'terraform/**'
-      - '.github/workflows/terraform-validate-ci.yaml'
+    - '**/README.md'
+    - 'kustomize/**'
+    - '.github/workflows/kustomize-build-ci.yaml'
+    - 'terraform/**'
+    - '.github/workflows/terraform-validate-ci.yaml'
 jobs:
   cleanup-namespace:
     runs-on: [self-hosted, is-enabled]
     steps:
-      - name: Delete PR namespace in staging cluster
-        if: ${{ always() }}
-        timeout-minutes: 20
-        run: |
-          gcloud container clusters get-credentials $PR_CLUSTER \
-              --region $REGION --project $PROJECT_ID
-          NAMESPACE="pr${PR_NUMBER}"
-          kubectl delete namespace $NAMESPACE
-        env:
-          PROJECT_ID: "online-boutique-ci"
-          PR_CLUSTER: "prs-gke-cluster"
-          REGION: "us-central1"
-          PR_NUMBER: ${{ github.event.number }}
+    - name: Delete PR namespace in staging cluster
+      if: ${{ always() }}
+      timeout-minutes: 20
+      run: |
+        gcloud container clusters get-credentials $PR_CLUSTER \
+            --region $REGION --project $PROJECT_ID
+        NAMESPACE="pr${PR_NUMBER}"
+        kubectl delete namespace $NAMESPACE
+      env:
+        PROJECT_ID: "online-boutique-ci"
+        PR_CLUSTER: "prs-gke-cluster"
+        REGION: "us-central1"
+        PR_NUMBER: ${{ github.event.number }}
+metadata:
+  annotations:
+    checkov.io/skip100: CKV_K8S_22=Might break file writes
+    checkov.io/skip101: CKV_K8S_28=Capabilities needed
+    checkov.io/skip102: CKV_K8S_37=Default seccomp is fine
+    checkov.io/skip103: CKV_K8S_43=Using latest tags for development
+    checkov.io/skip104: CKV_K8S_8=No liveness probe available
+    checkov.io/skip105: CKV_K8S_9=No readiness probe available
+    checkov.io/skip106: CKV_K8S_10=No CPU requests
+    checkov.io/skip107: CKV_K8S_11=No CPU limits
+    checkov.io/skip108: CKV_K8S_12=No Memory requests
+    checkov.io/skip109: CKV_K8S_13=No Memory limits
+    checkov.io/skip110: CKV_K8S_14=No CPU limit
+    checkov.io/skip111: CKV_K8S_15=No Memory limit

@@ -1,3 +1,4 @@
+# checkov:skip=CKV_DOCKER_2: Kubernetes manages health probes natively
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +28,7 @@ COPY . .
 ARG SKAFFOLD_GO_GCFLAGS
 RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -ldflags="-s -w" -gcflags="${SKAFFOLD_GO_GCFLAGS}" -o /checkoutservice .
 
-FROM gcr.io/distroless/static
+FROM gcr.io/distroless/static:nonroot
 
 WORKDIR /src
 COPY --from=builder /checkoutservice /src/checkoutservice
@@ -43,3 +44,4 @@ EXPOSE 5050
 USER 65532
 
 ENTRYPOINT ["/src/checkoutservice"]
+

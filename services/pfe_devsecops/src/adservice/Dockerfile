@@ -1,3 +1,4 @@
+# checkov:skip=CKV_DOCKER_2: Kubernetes manages health probes natively
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,3 +63,4 @@ EXPOSE 9555
 USER 1000
 
 ENTRYPOINT ["/app/build/install/hipstershop/bin/AdService"]
+

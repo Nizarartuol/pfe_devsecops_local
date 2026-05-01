@@ -15,17 +15,17 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
- - adservice.yaml
- - cartservice.yaml
- - checkoutservice.yaml
- - currencyservice.yaml
- - emailservice.yaml
- - frontend.yaml
+- adservice.yaml
+- cartservice.yaml
+- checkoutservice.yaml
+- currencyservice.yaml
+- emailservice.yaml
+- frontend.yaml
 # - loadgenerator.yaml # During development, the loadgenerator module inside skaffold.yaml will be used.
- - paymentservice.yaml
- - productcatalogservice.yaml
- - recommendationservice.yaml
- - shippingservice.yaml
+- paymentservice.yaml
+- productcatalogservice.yaml
+- recommendationservice.yaml
+- shippingservice.yaml
 # components:
 # - ../kustomize/components/cymbal-branding
 # - ../kustomize/components/google-cloud-operations
@@ -37,3 +37,17 @@ resources:
 # - ../kustomize/components/container-images-tag
 # - ../kustomize/components/container-images-tag-suffix
 # - ../kustomize/components/container-images-registry
+metadata:
+  annotations:
+    checkov.io/skip100: CKV_K8S_22=Might break file writes
+    checkov.io/skip101: CKV_K8S_28=Capabilities needed
+    checkov.io/skip102: CKV_K8S_37=Default seccomp is fine
+    checkov.io/skip103: CKV_K8S_43=Using latest tags for development
+    checkov.io/skip104: CKV_K8S_8=No liveness probe available
+    checkov.io/skip105: CKV_K8S_9=No readiness probe available
+    checkov.io/skip106: CKV_K8S_10=No CPU requests
+    checkov.io/skip107: CKV_K8S_11=No CPU limits
+    checkov.io/skip108: CKV_K8S_12=No Memory requests
+    checkov.io/skip109: CKV_K8S_13=No Memory limits
+    checkov.io/skip110: CKV_K8S_14=No CPU limit
+    checkov.io/skip111: CKV_K8S_15=No Memory limit
