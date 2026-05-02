@@ -1,0 +1,33 @@
+title = "Gitleaks Configuration for PFE DevSecOps"
+
+[extend]
+# Extend the default ruleset — all default rules remain active
+useDefault = true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Global allowlist: paths that should never be scanned for secrets
+# These are third-party vendored libraries and their documentation.
+# Real secrets in our own code (services/, .github/) are still fully scanned.
+# ─────────────────────────────────────────────────────────────────────────────
+[allowlist]
+description = "Third-party vendor code and documentation allowlist"
+paths = [
+  # Kubernetes Cluster Autoscaler — third-party library, not our code
+  "autoscaler/",
+]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Specific rule-level allowlists for known false positives
+# These target the exact regex patterns or regexes that cause false positives.
+# ─────────────────────────────────────────────────────────────────────────────
+[[rules]]
+id = "generic-api-key-brightbox-default"
+description = "Brightbox cloud provider default client secret (non-sensitive placeholder)"
+# We RE-USE the default generic-api-key rule but add a targetted allowlist
+[rules.allowlist]
+regexes = [
+  # This is a hardcoded default placeholder in brightbox_auth.go, not a real secret
+  'defaultClientSecret\s*=\s*"[^"]+"',
+  # This is a GPG key variable in a README example/documentation
+  '_BASH_GPG_KEY=',
+]
