@@ -9,11 +9,11 @@ on:
 env:
   REGISTRY: ghcr.io/nizarartuol
   IMAGE_TAG: ${{ github.sha }}
-  # All microservices to build/scan
-  SERVICES: "frontend adservice cartservice checkoutservice currencyservice emailservice paymentservice productcatalogservice recommendationservice shippingservice loadgenerator"
 
 permissions:
   contents: write
+  packages: write
+  security-events: write
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────────
@@ -33,23 +33,31 @@ jobs:
           fi
           echo "✅ All required secrets are present."
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 1. Security – Gitleaks + Trivy FS + Trivy image scan (frontend only, fast)
-# ─────────────────────────────────────────────────────────────────────────────
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 1. Security – Gitleaks + Trivy FS + Checkov + Semgrep (parallel capable)
+  # ─────────────────────────────────────────────────────────────────────────────
   security:
     runs-on: ubuntu-latest
     needs: check-secrets
     steps:
       - uses: actions/checkout@v4
 
-    # Secret leaks
+      # Secret leaks — blocks if leaks found
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
 
-    # Regenerate go.sum files to match updated go.mod dependency versions
+      # Cache Trivy vulnerability DB to speed up repeated runs
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ runner.os }}
+          restore-keys: |
+            trivy-db-
+
+      # Regenerate go.sum files for Go services
       - name: Update Go module checksums
         run: |
           for svc in checkoutservice productcatalogservice shippingservice frontend; do
@@ -59,7 +67,7 @@ jobs:
             fi
           done
 
-    # Trivy filesystem scan – blocks the pipeline on CRITICAL/HIGH findings.
+      # Trivy filesystem scan — CRITICAL/HIGH blocks pipeline
       - name: Trivy FS Scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -69,8 +77,9 @@ jobs:
           exit-code: 1
           ignore-unfixed: true
           format: table
+          cache-dir: ~/.cache/trivy
 
-    # IaC Security: Checkov – Kubernetes manifests + Dockerfiles
+      # IaC Security: Checkov — Kubernetes manifests + Dockerfiles
       - name: Checkov IaC Scan
         uses: bridgecrewio/checkov-action@v12
         with:
@@ -79,21 +88,20 @@ jobs:
           quiet: true
           soft_fail: false
 
-    # SAST: Semgrep Scan
+      # SAST: Semgrep — only on PRs (where it adds most value for code review)
       - name: Semgrep Scan
+        if: github.event_name == 'pull_request'
         uses: returntocorp/semgrep-action@v1
         with:
           config: "p/default"
-        continue-on-error: true
-
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # 2. SonarQube – SonarCloud (always) + self-hosted 
+  # 2. SonarCloud — runs in parallel with security (only on main branch)
   # ─────────────────────────────────────────────────────────────────────────────
   sonar:
     runs-on: ubuntu-latest
     needs: check-secrets
-    # Expose secret as an env var so we can check it in step `if:` conditions
+    if: github.ref == 'refs/heads/main'
     env:
       SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
     steps:
@@ -107,49 +115,47 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # ── SonarCloud (always runs) ───────────────────────────────────────────
-      - name: Vérifier le contenu du repo
-        run: ls -R .
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v3.0.0
         with:
-          projectBaseDir: services/pfe_devsecops   # <- assure-toi que ce chemin existe après checkout
+          projectBaseDir: services/pfe_devsecops
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Self-hosted SonarQube (only when SONAR_HOST_URL secret is set) ────
-#      - name: Self-hosted SonarQube Scan
-#        if: ${{ env.SONAR_HOST_URL != '' }}
-#        uses: SonarSource/sonarqube-scan-action@v5
-#        with:
-#          projectBaseDir: ./services/pfe_devsecops
-#        env:
-#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-#          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-#
   # ─────────────────────────────────────────────────────────────────────────────
-  # 3. OWASP ZAP Baseline Scan – runs against the locally started frontend
+  # 3. OWASP ZAP Baseline Scan — only on push to main
   # ─────────────────────────────────────────────────────────────────────────────
   zap:
     runs-on: ubuntu-latest
     needs: security
+    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build and start frontend
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build frontend for ZAP scan
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/pfe_devsecops/src/frontend
+          push: false
+          load: true
+          tags: app-test:latest
+          cache-from: type=gha,scope=zap-frontend
+          cache-to: type=gha,scope=zap-frontend,mode=max
+
+      - name: Start frontend and wait for readiness
         run: |
-          docker build \
-            -t app-test \
-            ./services/pfe_devsecops/src/frontend
-          docker run -d -p 8080:8080 --name frontend-zap app-test
+          docker run -d -p 8080:8080 --name frontend-zap app-test:latest
           echo "Waiting for frontend to be ready…"
-          for i in $(seq 1 12); do
+          for i in $(seq 1 6); do
             if curl -sf http://localhost:8080/_healthz > /dev/null 2>&1; then
               echo "Frontend is up."
               break
             fi
-            echo "Attempt $i/12 – not ready yet, sleeping 5s…"
+            echo "Attempt $i/6 – not ready yet, sleeping 5s…"
             sleep 5
           done
 
@@ -166,30 +172,38 @@ jobs:
           name: zap-report
           path: report_md.md
 
-      # [DEFECTDOJO - disabled] Uncomment when DEFECTDOJO_URL + DEFECTDOJO_TOKEN secrets are set
-      # - name: Upload ZAP Report to DefectDojo
-      #   if: always()
-      #   run: |
-      #     curl -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/import-scan/" \
-      #       -H "Authorization: Token ${{ secrets.DEFECTDOJO_TOKEN }}" \
-      #       -F "file=@zap-report.json" \
-      #       -F "scan_type=ZAP Scan" \
-      #       -F "engagement_name=GitHub Actions" \
-      #       -F "verified=true" \
-      #       -F "active=true"
-
       - name: Stop frontend container
         if: always()
         run: docker stop frontend-zap || true
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # 4. Build & Push – loop over all 11 services → registry.localhost:5000
+  # 4. Build & Push — matrix strategy: all 11 services in parallel
+  # Each job instance: build one service, push, scan with Trivy image scan
+  # Depends ONLY on security (runs in parallel with sonar and zap)
   # ─────────────────────────────────────────────────────────────────────────────
   build-push:
     runs-on: ubuntu-latest
-    needs: [security, sonar, zap]
+    needs: security
+    strategy:
+      fail-fast: true
+      matrix:
+        service:
+          - frontend
+          - adservice
+          - cartservice
+          - checkoutservice
+          - currencyservice
+          - emailservice
+          - paymentservice
+          - productcatalogservice
+          - recommendationservice
+          - shippingservice
+          - loadgenerator
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -198,69 +212,51 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      - name: Build, push, and Trivy-scan all services
+      - name: Determine build context
+        id: ctx
         run: |
-          SRC_BASE="./services/pfe_devsecops/src"
-          REGISTRY="${{ env.REGISTRY }}"
-          TAG="${{ env.IMAGE_TAG }}"
-          SERVICES="${{ env.SERVICES }}"
+          if [ "${{ matrix.service }}" = "cartservice" ]; then
+            echo "path=./services/pfe_devsecops/src/${{ matrix.service }}/src" >> $GITHUB_OUTPUT
+          else
+            echo "path=./services/pfe_devsecops/src/${{ matrix.service }}" >> $GITHUB_OUTPUT
+          fi
 
-          for svc in $SERVICES; do
-            echo "══════════════════════════════════════"
-            echo "▶ Building  $REGISTRY/$svc:$TAG"
-            echo "══════════════════════════════════════"
-            if [ "$svc" = "cartservice" ]; then
-              BUILD_CTX="$SRC_BASE/$svc/src"
-            else
-              BUILD_CTX="$SRC_BASE/$svc"
-            fi
-            docker build -t "$REGISTRY/$svc:$TAG" "$BUILD_CTX"
+      - name: Build and push ${{ matrix.service }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ steps.ctx.outputs.path }}
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,scope=${{ matrix.service }},mode=max
 
-            echo "▶ Pushing   $REGISTRY/$svc:$TAG  (with retry)"
-            for attempt in 1 2 3; do
-              if docker push "$REGISTRY/$svc:$TAG"; then
-                echo "✅ Push succeeded on attempt $attempt."
-                break
-              fi
-              echo "⚠️  Push failed (attempt $attempt/3). Retrying in 10s…"
-              sleep 10
-              if [ $attempt -eq 3 ]; then
-                echo "❌ Push failed after 3 attempts for $svc. Aborting."
-                exit 1
-              fi
-            done
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ runner.os }}
+          restore-keys: |
+            trivy-db-
 
-            echo "▶ Trivy image scan: $REGISTRY/$svc:$TAG"
-            docker run --rm \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              aquasec/trivy:0.48.0 image \
-              --severity CRITICAL,HIGH \
-              --exit-code 1 \
-              --ignore-unfixed \
-              "$REGISTRY/$svc:$TAG"
-
-            # [DEFECTDOJO - disabled] Uncomment when DEFECTDOJO_URL + DEFECTDOJO_TOKEN secrets are set
-            # echo "▶ Uploading Trivy report for $svc to DefectDojo"
-            # docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-            #   aquasec/trivy:0.48.0 image --severity CRITICAL,HIGH --ignore-unfixed \
-            #   --format json -o trivy-report.json "$REGISTRY/$svc:$TAG"
-            # curl -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/import-scan/" \
-            #   -H "Authorization: Token ${{ secrets.DEFECTDOJO_TOKEN }}" \
-            #   -F "file=@trivy-report.json" \
-            #   -F "scan_type=Trivy Scan" \
-            #   -F "engagement_name=GitHub Actions" \
-            #   -F "verified=true" \
-            #   -F "active=true" || echo "⚠️  DefectDojo upload failed for $svc (non-blocking)"
-
-            echo "✅ $svc done."
-          done
+      - name: Trivy image scan — ${{ matrix.service }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: image
+          image-ref: ${{ env.REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          ignore-unfixed: true
+          format: table
+          cache-dir: ~/.cache/trivy
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # 5. GitOps Update – update image tags in gitops-repo and push
+  # 5. GitOps Update — update image tags in gitops-repo manifests
+  # Waits for ALL matrix build-push jobs to succeed
   # ─────────────────────────────────────────────────────────────────────────────
   gitops-update:
     runs-on: ubuntu-latest
     needs: build-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout GitOps repo
         uses: actions/checkout@v4
@@ -274,7 +270,7 @@ jobs:
           MANIFESTS_DIR="gitops-repo/apps"
           REGISTRY="${{ env.REGISTRY }}"
           TAG="${{ env.IMAGE_TAG }}"
-          SERVICES="${{ env.SERVICES }}"
+          SERVICES="frontend adservice cartservice checkoutservice currencyservice emailservice paymentservice productcatalogservice recommendationservice shippingservice loadgenerator"
 
           for svc in $SERVICES; do
             FILE="$MANIFESTS_DIR/$svc/deployment.yaml"
@@ -298,4 +294,3 @@ jobs:
             git commit -m "ci: update image tags to ${{ env.IMAGE_TAG }} [skip ci]"
             git push
           fi
-
