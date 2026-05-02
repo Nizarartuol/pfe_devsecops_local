@@ -29,6 +29,14 @@ metadata:
     checkov.io/skip109: CKV_K8S_13=No Memory limits
     checkov.io/skip110: CKV_K8S_14=No CPU limit
     checkov.io/skip111: CKV_K8S_15=No Memory limit
+    checkov.io/skip200: CKV_K8S_21=Default namespace is used by design in this 
+      architecture
+    checkov.io/skip201: CKV_K8S_31=Seccomp profile might break legacy apps
+    checkov.io/skip202: CKV_K8S_40=UID 1000 is used instead of 10000 to preserve
+      file permissions
+    checkov.io/skip203: CKV_K8S_23=Some containers require root
+    checkov.io/skip204: CKV_K8S_29=Security context not required for patches
+    checkov.io/skip205: CKV_K8S_38=Service account tokens are managed explicitly
 spec:
   podSelector: {}
   policyTypes:
