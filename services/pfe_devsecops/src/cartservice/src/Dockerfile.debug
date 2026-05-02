@@ -30,4 +30,7 @@ WORKDIR /app
 COPY --from=publish /out .
 ENV ASPNETCORE_HTTP_PORTS=7070
 
+# Run as non-root user
+USER 1000
+
 ENTRYPOINT ["dotnet", "cartservice.dll"]
