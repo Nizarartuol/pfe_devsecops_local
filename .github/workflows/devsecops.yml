@@ -95,6 +95,26 @@ jobs:
         with:
           config: "p/default"
 
+      - name: Verify dependency lock files
+        run: |
+          echo "Vérification des fichiers de lock..."
+          for svc in checkoutservice productcatalogservice shippingservice frontend; do
+            if [ -f "./src/$svc/go.mod" ] && [ ! -f "./src/$svc/go.sum" ]; then
+              echo "❌ go.sum manquant pour $svc"
+              exit 1
+            fi
+            echo "✅ $svc lock file OK"
+          done
+
+      - name: Check for unpinned base images
+        run: |
+          if grep -r "FROM.*:latest" ./src/*/Dockerfile 2>/dev/null; then
+            echo "❌ Images avec tag :latest détectées dans les Dockerfiles"
+            exit 1
+          else
+            echo "✅ Toutes les images de base sont pinnées"
+          fi
+
   # ─────────────────────────────────────────────────────────────────────────────
   # 2. SonarCloud — runs in parallel with security (only on main branch)
   # ─────────────────────────────────────────────────────────────────────────────
@@ -212,6 +232,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
       - name: Determine build context
         id: ctx
         run: |
@@ -249,6 +272,50 @@ jobs:
           format: table
           cache-dir: ~/.cache/trivy
 
+      - name: Sign all images with Cosign
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          REGISTRY="${{ env.REGISTRY }}"
+          TAG="${{ env.IMAGE_TAG }}"
+          SERVICES="${{ env.SERVICES }}"
+
+          for svc in $SERVICES; do
+            IMAGE="$REGISTRY/$svc:$TAG"
+            echo "🔏 Signing $IMAGE"
+            cosign sign --yes "$IMAGE"
+            echo "✅ $svc signed successfully"
+          done
+
+      - name: Generate and sign SBOM for all services
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          REGISTRY="${{ env.REGISTRY }}"
+          TAG="${{ env.IMAGE_TAG }}"
+          SERVICES="${{ env.SERVICES }}"
+
+          for svc in $SERVICES; do
+            IMAGE="$REGISTRY/$svc:$TAG"
+            echo "📋 Generating SBOM for $svc"
+            syft "$IMAGE" -o spdx-json > sbom-$svc.json
+
+            echo "🔏 Signing SBOM for $svc"
+            cosign attest --yes \
+              --predicate sbom-$svc.json \
+              --type spdxjson \
+              "$IMAGE"
+
+            echo "✅ SBOM generated and signed for $svc"
+          done
+
+      - name: Upload SBOMs as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-reports
+          path: sbom-*.json
+          retention-days: 90
+
   # ─────────────────────────────────────────────────────────────────────────────
   # 5. GitOps Update — update image tags in gitops-repo manifests
   # Waits for ALL matrix build-push jobs to succeed
@@ -264,6 +331,26 @@ jobs:
           repository: Nizarartuol/pfe-devsecops-gitops
           path: gitops-repo
           token: ${{ secrets.GITOPS_TOKEN }}
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Verify all image signatures
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          REGISTRY="${{ env.REGISTRY }}"
+          TAG="${{ env.IMAGE_TAG }}"
+          SERVICES="${{ env.SERVICES }}"
+
+          for svc in $SERVICES; do
+            IMAGE="$REGISTRY/$svc:$TAG"
+            echo "🔍 Verifying signature for $IMAGE"
+            cosign verify "$IMAGE" \
+              --certificate-identity-regexp="https://github.com/Nizarartuol/.*" \
+              --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
+            echo "✅ $svc signature verified"
+          done
 
       - name: Update image tags in Kubernetes manifests
         run: |
