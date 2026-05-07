@@ -15,15 +15,8 @@
 
 FROM --platform=$BUILDPLATFORM python:3.14.2-alpine@sha256:31da4cb527055e4e3d7e9e006dffe9329f84ebea79eaca0a1f1c27ce61e40ca5 AS base
 
-RUN apk add --no-cache --upgrade \
-    libcrypto3 \
-    libssl3 \
-    openssl \
-    musl \
-    musl-utils \
-    zlib \
-    libpng \
-    expat
+# Upgrade all Alpine OS packages to fix vulnerabilities and add curl for healthcheck.
+RUN apk update && apk upgrade --no-cache && apk add --no-cache curl
 
 FROM base AS builder
 

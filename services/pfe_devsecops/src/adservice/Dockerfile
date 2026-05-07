@@ -28,17 +28,8 @@ RUN ./gradlew installDist
 
 FROM eclipse-temurin:25.0.1_8-jre-alpine@sha256:9c65fe190cb22ba92f50b8d29a749d0f1cfb2437e09fe5fbf9ff927c45fc6e99
 
-# Upgrade vulnerable Alpine OS packages detected by Trivy.
-# Use explicit --upgrade installs for runtime libs bundled in the final image.
-RUN apk add --no-cache --upgrade \
-    libcrypto3 \
-    libssl3 \
-    openssl \
-    musl \
-    musl-utils \
-    zlib \
-    libpng \
-    expat
+# Upgrade all Alpine OS packages to fix vulnerabilities detected by Trivy.
+RUN apk update && apk upgrade --no-cache && apk add --no-cache curl
 
 # @TODO: https://github.com/GoogleCloudPlatform/microservices-demo/issues/2517
 # Download Stackdriver Profiler Java agent
