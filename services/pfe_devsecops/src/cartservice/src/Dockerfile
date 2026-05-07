@@ -39,5 +39,8 @@ EXPOSE 7070
 ENV DOTNET_EnableDiagnostics=0 \
     ASPNETCORE_HTTP_PORTS=7070
 USER 1000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl -f http://localhost:7070/ || exit 1
+
 ENTRYPOINT ["/app/cartservice"]
 

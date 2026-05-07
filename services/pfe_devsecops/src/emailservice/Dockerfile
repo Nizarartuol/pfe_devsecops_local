@@ -70,5 +70,8 @@ EXPOSE 8080
 # Run as non-root user
 USER 1000
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:8080/ || exit 1
+
 ENTRYPOINT [ "python", "email_server.py" ]
 

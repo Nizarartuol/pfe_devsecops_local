@@ -43,5 +43,8 @@ EXPOSE 5050
 # Run as non-root user (distroless nonroot user)
 USER 65532
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:5050/ || exit 1
+
 ENTRYPOINT ["/src/checkoutservice"]
 

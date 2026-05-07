@@ -60,5 +60,8 @@ EXPOSE 7000
 # Run as non-root user
 USER 1000
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:7000/ || exit 1
+
 ENTRYPOINT [ "node", "server.js" ]
 

@@ -62,5 +62,8 @@ EXPOSE 9555
 # Run as non-root user
 USER 1000
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:9555/ || exit 1
+
 ENTRYPOINT ["/app/build/install/hipstershop/bin/AdService"]
 
