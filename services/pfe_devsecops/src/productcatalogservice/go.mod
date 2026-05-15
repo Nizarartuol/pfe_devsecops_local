@@ -2,7 +2,7 @@ module github.com/GoogleCloudPlatform/microservices-demo/src/productcatalogservi
 
 go 1.25.0
 
-toolchain go1.25.9
+toolchain go1.25.10
 
 require (
 	cloud.google.com/go/alloydbconn v1.17.2
