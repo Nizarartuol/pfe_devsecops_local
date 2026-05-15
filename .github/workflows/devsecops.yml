@@ -168,7 +168,16 @@ jobs:
 
       - name: Start frontend and wait for readiness
         run: |
-          docker run -d -p 8080:8080 --name frontend-zap app-test:latest
+          docker run -d -p 8080:8080 --name frontend-zap \
+            -e PRODUCT_CATALOG_SERVICE_ADDR=localhost:3550 \
+            -e CURRENCY_SERVICE_ADDR=localhost:7000 \
+            -e CART_SERVICE_ADDR=localhost:7070 \
+            -e RECOMMENDATION_SERVICE_ADDR=localhost:8080 \
+            -e CHECKOUT_SERVICE_ADDR=localhost:5050 \
+            -e SHIPPING_SERVICE_ADDR=localhost:50051 \
+            -e AD_SERVICE_ADDR=localhost:9555 \
+            -e SHOPPING_ASSISTANT_SERVICE_ADDR=localhost:8080 \
+            app-test:latest
           echo "Waiting for frontend to be ready…"
           for i in $(seq 1 6); do
             if curl -sf http://localhost:8080/_healthz > /dev/null 2>&1; then
