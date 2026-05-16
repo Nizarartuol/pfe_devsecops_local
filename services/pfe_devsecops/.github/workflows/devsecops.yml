@@ -153,7 +153,15 @@ jobs:
           done
 
       - name: Run ZAP Baseline Scan
+        if: github.event_name == 'pull_request'
         uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:8080'
+          cmd_options: '-J zap-report.json'
+
+      - name: Run ZAP Full Scan
+        if: github.ref == 'refs/heads/main'
+        uses: zaproxy/action-full-scan@v0.12.0
         with:
           target: 'http://localhost:8080'
           cmd_options: '-J zap-report.json'
@@ -163,7 +171,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: zap-report
-          path: report_md.md
+          path: |
+            report_md.md
+            zap-report.json
 
       # [DEFECTDOJO - disabled] Uncomment when DEFECTDOJO_URL + DEFECTDOJO_TOKEN secrets are set
       # - name: Upload ZAP Report to DefectDojo
@@ -232,11 +242,12 @@ jobs:
             echo "▶ Trivy image scan: $REGISTRY/$svc:$TAG"
             docker run --rm \
               -v /var/run/docker.sock:/var/run/docker.sock \
+              -v ${{ github.workspace }}:/workspace -w /workspace \
               aquasec/trivy:0.48.0 image \
               --severity CRITICAL,HIGH \
-              --exit-code 1 \
               --ignore-unfixed \
-              "$REGISTRY/$svc:$TAG"
+              --format json -o trivy-report.json \
+              "$REGISTRY/$svc:$TAG" || true
 
             # [DEFECTDOJO - disabled] Uncomment when DEFECTDOJO_URL + DEFECTDOJO_TOKEN secrets are set
             # echo "▶ Uploading Trivy report for $svc to DefectDojo"
@@ -253,6 +264,67 @@ jobs:
 
             echo "✅ $svc done."
           done
+
+      - name: EPSS and KEV Enrichment
+        run: |
+          jq -r '.Results[]?.Vulnerabilities[]?.VulnerabilityID' trivy-report.json | sort -u > cves.txt || true
+          curl -s https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json > kev.json
+          jq -r '.vulnerabilities[].cveID' kev.json > kev.txt
+          grep -Ff kev.txt cves.txt > kev_matches.txt || true
+          
+          > epss_results.txt
+          while read cve; do
+            if [ -n "$cve" ] && [ "$cve" != "null" ]; then
+              curl -s "https://api.first.org/data/v1/epss?cve=$cve" >> epss_results.txt
+              echo "" >> epss_results.txt
+            fi
+          done < cves.txt
+
+      - name: Risk-Based Policy Check
+        run: |
+          FAIL=0
+          if [ -s kev_matches.txt ]; then
+            echo "🚨 KEV Match found! Failing build."
+            cat kev_matches.txt
+            FAIL=1
+          fi
+          
+          if [ -f epss_results.txt ]; then
+            while read cve; do
+              EPSS=$(grep -A 1 "\"cve\":\"$cve\"" epss_results.txt | grep -oP '"epss":"\K[0-9.]+' | head -1 || echo "0")
+              CVSS=$(jq -r --arg cve "$cve" '.Results[]?.Vulnerabilities[]? | select(.VulnerabilityID == $cve) | .CVSS.nvd.V3Score // .CVSS.redhat.V3Score // 0' trivy-report.json | head -1)
+              
+              if [ -z "$EPSS" ] || [ "$EPSS" == "null" ]; then EPSS="0"; fi
+              if [ -z "$CVSS" ] || [ "$CVSS" == "null" ]; then CVSS="0"; fi
+              
+              if awk "BEGIN {exit !($EPSS > 0.7 && $CVSS > 7.0)}"; then
+                echo "🚨 High Risk Match: $cve has EPSS=$EPSS and CVSS=$CVSS"
+                FAIL=1
+              fi
+            done < cves.txt
+          fi
+          
+          if [ "$FAIL" -eq 1 ]; then
+            echo "❌ Pipeline failed due to risk-based policy."
+            exit 1
+          fi
+
+      - name: Download ZAP Report
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: zap-report
+
+      - name: Upload Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            trivy-report.json
+            zap-report.json
+            epss_results.txt
+            kev_matches.txt
 
   # ─────────────────────────────────────────────────────────────────────────────
   # 5. GitOps Update – update image tags in gitops-repo and push
