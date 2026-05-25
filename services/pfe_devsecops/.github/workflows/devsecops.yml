@@ -1,5 +1,5 @@
 name: Secure DevSecOps Pipeline
-# Comment to trigger pipeline commit
+
 on:
   push:
     branches:
