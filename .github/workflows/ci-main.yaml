@@ -45,14 +45,14 @@ jobs:
       run: |
         for SERVICE in "shippingservice" "productcatalogservice"; do
           echo "testing $SERVICE..."
-          pushd src/$SERVICE
+          pushd services/pfe_devsecops/src/$SERVICE
           go test
           popd
         done
     - name: C# Unit Tests
       timeout-minutes: 10
       run: |
-        dotnet test src/cartservice/
+        dotnet test services/pfe_devsecops/src/cartservice/
   deployment-tests:
     runs-on: ubuntu-latest
     needs: code-tests
