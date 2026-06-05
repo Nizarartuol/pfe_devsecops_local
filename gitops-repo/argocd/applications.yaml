@@ -11,7 +11,7 @@ spec:
       jsonPointers:
         - /spec/replicas
   source:
-    repoURL: https://github.com/Nizarartuol/pfe-devsecops-gitops.git  # Remplace avec ton repo
+    repoURL: https://github.com/Nizarartuol/pfe-devsecops-gitops.git 
     targetRevision: HEAD
     path: gitops-repo/kubernetes-manifests
   destination:

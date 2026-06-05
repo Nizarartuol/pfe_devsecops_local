@@ -21,6 +21,10 @@ Objectif : minimiser les nodes utilisés → économie de ressources
 import subprocess
 import time
 import logging
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # ✅ NOUVEAU : import centralisé
 from metrics.metrics_normalizer import get_metrics

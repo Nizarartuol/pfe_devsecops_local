@@ -53,4 +53,8 @@ def main():
         run()
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n⛔ Autoscaler arrêté par l'utilisateur.")
+        sys.exit(0)

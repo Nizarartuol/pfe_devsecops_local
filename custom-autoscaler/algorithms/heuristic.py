@@ -21,8 +21,12 @@ la connaissance humaine en règles automatiques.
 import subprocess
 import time
 import logging
+import sys
+import os
 import numpy as np
 from collections import defaultdict, deque
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 🔥 IMPORT NORMALIZER
 from metrics.metrics_normalizer import get_metrics
@@ -153,9 +157,11 @@ def run():
     cooldown = {1: 20, 2: 40, 3: 60}
     
     while True:
-        # 🔥 RÉCUPÉRATION CENTRALISÉE
-        metrics = get_metrics()
-        cpu_map = metrics["cpu"]
+        # 🔥 RÉCUPÉRATION CENTRALISÉE — par service
+        cpu_map = {}
+        for svc in SERVICES:
+            m = get_metrics(svc)
+            cpu_map[svc] = m["cpu_percent"] / 100   # convertir % → ratio (0-1)
 
         for service in SERVICES:
             cpu = cpu_map[service]

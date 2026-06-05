@@ -17,6 +17,10 @@ le plus chargé reçoit le scaling en premier.
 import subprocess
 import time
 import logging
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 🔥 IMPORT NORMALIZER
 from metrics.metrics_normalizer import get_metrics
@@ -103,9 +107,11 @@ def run():
     last_scale_time = {}
     
     while True:
-        # 🔥 CPU NORMALISÉ
-        metrics = get_metrics()
-        cpu_map = metrics["cpu"]
+        # 🔥 CPU NORMALISÉ — collecte par service
+        cpu_map = {}
+        for service in SERVICES:
+            m = get_metrics(service)
+            cpu_map[service] = m["cpu_percent"] / 100   # convertir % → ratio (0-1)
         
         # Affichage classement
         sorted_services = sorted(cpu_map.items(), key=lambda x: x[1], reverse=True)

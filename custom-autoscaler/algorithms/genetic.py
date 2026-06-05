@@ -25,8 +25,12 @@ Différence avec PSO :
 import subprocess
 import time
 import logging
+import sys
+import os
 import numpy as np
 import random
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 🔥 IMPORT NORMALIZER
 from metrics.metrics_normalizer import get_metrics
@@ -160,9 +164,11 @@ def run():
     logging.info("🚀 Démarrage Genetic Algorithm Autoscaler")
 
     while True:
-        # 🔥 UTILISATION NORMALIZER
-        metrics = get_metrics()
-        cpu_map = metrics["cpu"]
+        # 🔥 UTILISATION NORMALIZER — par service
+        cpu_map = {}
+        for svc in SERVICES:
+            m = get_metrics(svc)
+            cpu_map[svc] = m["cpu_percent"] / 100   # convertir % → ratio (0-1)
 
         logging.info("📊 CPU actuel: " +
                      ", ".join(f"{s}={v:.2%}" for s, v in cpu_map.items()))

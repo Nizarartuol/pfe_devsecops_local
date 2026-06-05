@@ -24,8 +24,12 @@ maximise la performance tout en minimisant le coût.
 import subprocess
 import time
 import logging
+import sys
+import os
 import numpy as np
 import random
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # ✅ NORMALIZER
 from metrics.metrics_normalizer import get_metrics
@@ -173,13 +177,11 @@ def run():
     last_metrics = {}
 
     while True:
-        # ✅ REMPLACÉ : une seule source de vérité
-        metrics = get_metrics()
-
-        cpu_map = {
-            svc: metrics.get(svc, {}).get("cpu_percent", 0.0)
-            for svc in SERVICES
-        }
+        # ✅ RÉCUPÉRATION PAR SERVICE
+        cpu_map = {}
+        for svc in SERVICES:
+            m = get_metrics(svc)
+            cpu_map[svc] = m["cpu_percent"] / 100   # convertir % → ratio (0-1)
 
         logging.info("📊 CPU actuel: " +
                      ", ".join(f"{s}={v:.2%}" for s, v in cpu_map.items()))

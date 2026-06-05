@@ -18,8 +18,12 @@ Limitation : précision dépend de la régularité du trafic
 import subprocess
 import time
 import logging
+import sys
+import os
 import numpy as np
 from collections import defaultdict, deque
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # ✅ IMPORT NORMALIZER
 from metrics.metrics_normalizer import get_metrics
@@ -104,11 +108,10 @@ def run():
     last_scale_time = {}
 
     while True:
-        # ✅ récupérer toutes les métriques en une fois
-        metrics = get_metrics()
-
         for service in SERVICES:
-            cpu = metrics.get(service, {}).get("cpu_percent", 0.0)
+            # ✅ récupérer les métriques par service
+            m = get_metrics(service)
+            cpu = m["cpu_percent"] / 100   # convertir % → ratio (0-1)
 
             cpu_history[service].append(cpu)
 
