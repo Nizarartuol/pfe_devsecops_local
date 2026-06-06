@@ -332,7 +332,7 @@ jobs:
             if [ -z "$cve" ] || [ "$cve" == "null" ]; then continue; fi
 
             EPSS=$(grep -A 1 "\"cve\":\"$cve\"" epss_results.txt | grep -oP '"epss":"\K[0-9.]+' | head -1 || echo "0")
-            CVSS=$(jq -r --arg cve "$cve" '.Results[]?.Vulnerabilities[]? | select(.VulnerabilityID == $cve) | .CVSS.nvd.V3Score // .CVSS.redhat.V3Score // 0' trivy-report.json | head -1)
+            CVSS=$(jq -r --arg cve "$cve" '.Results[]?.Vulnerabilities[]? | select(.VulnerabilityID == $cve) | [.CVSS[]?.V3Score? | numbers] | max // 0' trivy-report.json | head -1)
             
             if [ -z "$EPSS" ] || [ "$EPSS" == "null" ]; then EPSS="0"; fi
             if [ -z "$CVSS" ] || [ "$CVSS" == "null" ]; then CVSS="0"; fi
