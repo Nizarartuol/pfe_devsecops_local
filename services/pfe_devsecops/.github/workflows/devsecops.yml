@@ -240,6 +240,15 @@ jobs:
             done
 
             echo "▶ Trivy image scan: $REGISTRY/$svc:$TAG"
+            # We output to console so you can see it, and we also save to JSON for EPSS
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v ${{ github.workspace }}:/workspace -w /workspace \
+              aquasec/trivy:0.48.0 image \
+              --severity CRITICAL,HIGH \
+              --ignore-unfixed \
+              "$REGISTRY/$svc:$TAG" || true
+
             docker run --rm \
               -v /var/run/docker.sock:/var/run/docker.sock \
               -v ${{ github.workspace }}:/workspace -w /workspace \
@@ -249,65 +258,52 @@ jobs:
               --format json -o trivy-report.json \
               "$REGISTRY/$svc:$TAG" || true
 
-            # [DEFECTDOJO - disabled] Uncomment when DEFECTDOJO_URL + DEFECTDOJO_TOKEN secrets are set
-            # echo "▶ Uploading Trivy report for $svc to DefectDojo"
-            # docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-            #   aquasec/trivy:0.48.0 image --severity CRITICAL,HIGH --ignore-unfixed \
-            #   --format json -o trivy-report.json "$REGISTRY/$svc:$TAG"
-            # curl -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/import-scan/" \
-            #   -H "Authorization: Token ${{ secrets.DEFECTDOJO_TOKEN }}" \
-            #   -F "file=@trivy-report.json" \
-            #   -F "scan_type=Trivy Scan" \
-            #   -F "engagement_name=GitHub Actions" \
-            #   -F "verified=true" \
-            #   -F "active=true" || echo "⚠️  DefectDojo upload failed for $svc (non-blocking)"
+            echo "▶ EPSS and KEV Enrichment for $svc"
+            jq -r '.Results[]?.Vulnerabilities[]?.VulnerabilityID' trivy-report.json | sort -u > cves.txt || true
+            curl -s https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json > kev.json
+            jq -r '.vulnerabilities[].cveID' kev.json > kev.txt
+            grep -Ff kev.txt cves.txt > kev_matches.txt || true
+            
+            > epss_results.txt
+            while read cve; do
+              if [ -n "$cve" ] && [ "$cve" != "null" ]; then
+                curl -s "https://api.first.org/data/v1/epss?cve=$cve" >> epss_results.txt
+                echo "" >> epss_results.txt
+              fi
+            done < cves.txt
+
+            echo "▶ Risk-Based Policy Check for $svc"
+            FAIL=0
+            if [ -s kev_matches.txt ]; then
+              echo "🚨 KEV Match found in $svc! Failing build."
+              cat kev_matches.txt
+              FAIL=1
+            fi
+            
+            if [ -f epss_results.txt ]; then
+              while read cve; do
+                EPSS=$(grep -A 1 "\"cve\":\"$cve\"" epss_results.txt | grep -oP '"epss":"\K[0-9.]+' | head -1 || echo "0")
+                CVSS=$(jq -r --arg cve "$cve" '.Results[]?.Vulnerabilities[]? | select(.VulnerabilityID == $cve) | .CVSS.nvd.V3Score // .CVSS.redhat.V3Score // 0' trivy-report.json | head -1)
+                
+                if [ -z "$EPSS" ] || [ "$EPSS" == "null" ]; then EPSS="0"; fi
+                if [ -z "$CVSS" ] || [ "$CVSS" == "null" ]; then CVSS="0"; fi
+                
+                if awk "BEGIN {exit !($EPSS > 0.7 && $CVSS > 7.0)}"; then
+                  echo "🚨 High Risk Match in $svc: $cve has EPSS=$EPSS and CVSS=$CVSS"
+                  FAIL=1
+                fi
+              done < cves.txt
+            fi
+            
+            if [ "$FAIL" -eq 1 ]; then
+              echo "❌ Pipeline failed due to risk-based policy in $svc."
+              exit 1
+            fi
 
             echo "✅ $svc done."
           done
 
-      - name: EPSS and KEV Enrichment
-        run: |
-          jq -r '.Results[]?.Vulnerabilities[]?.VulnerabilityID' trivy-report.json | sort -u > cves.txt || true
-          curl -s https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json > kev.json
-          jq -r '.vulnerabilities[].cveID' kev.json > kev.txt
-          grep -Ff kev.txt cves.txt > kev_matches.txt || true
-          
-          > epss_results.txt
-          while read cve; do
-            if [ -n "$cve" ] && [ "$cve" != "null" ]; then
-              curl -s "https://api.first.org/data/v1/epss?cve=$cve" >> epss_results.txt
-              echo "" >> epss_results.txt
-            fi
-          done < cves.txt
 
-      - name: Risk-Based Policy Check
-        run: |
-          FAIL=0
-          if [ -s kev_matches.txt ]; then
-            echo "🚨 KEV Match found! Failing build."
-            cat kev_matches.txt
-            FAIL=1
-          fi
-          
-          if [ -f epss_results.txt ]; then
-            while read cve; do
-              EPSS=$(grep -A 1 "\"cve\":\"$cve\"" epss_results.txt | grep -oP '"epss":"\K[0-9.]+' | head -1 || echo "0")
-              CVSS=$(jq -r --arg cve "$cve" '.Results[]?.Vulnerabilities[]? | select(.VulnerabilityID == $cve) | .CVSS.nvd.V3Score // .CVSS.redhat.V3Score // 0' trivy-report.json | head -1)
-              
-              if [ -z "$EPSS" ] || [ "$EPSS" == "null" ]; then EPSS="0"; fi
-              if [ -z "$CVSS" ] || [ "$CVSS" == "null" ]; then CVSS="0"; fi
-              
-              if awk "BEGIN {exit !($EPSS > 0.7 && $CVSS > 7.0)}"; then
-                echo "🚨 High Risk Match: $cve has EPSS=$EPSS and CVSS=$CVSS"
-                FAIL=1
-              fi
-            done < cves.txt
-          fi
-          
-          if [ "$FAIL" -eq 1 ]; then
-            echo "❌ Pipeline failed due to risk-based policy."
-            exit 1
-          fi
 
       - name: Download ZAP Report
         if: always()
