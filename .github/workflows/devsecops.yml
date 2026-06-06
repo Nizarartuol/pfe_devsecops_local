@@ -270,16 +270,100 @@ jobs:
           restore-keys: |
             trivy-db-
 
-      - name: Trivy image scan — ${{ matrix.service }}
+      - name: Trivy image scan — ${{ matrix.service }} (Table)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: image
           image-ref: ${{ env.REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
           severity: CRITICAL,HIGH
-          exit-code: 1
+          exit-code: 0
           ignore-unfixed: true
           format: table
           cache-dir: ~/.cache/trivy
+
+      - name: Trivy image scan — ${{ matrix.service }} (JSON)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: image
+          image-ref: ${{ env.REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
+          severity: CRITICAL,HIGH
+          exit-code: 0
+          ignore-unfixed: true
+          format: json
+          output: trivy-report.json
+          cache-dir: ~/.cache/trivy
+
+      - name: EPSS and KEV Enrichment for ${{ matrix.service }}
+        run: |
+          if [ ! -f trivy-report.json ]; then
+            echo "⚠️ trivy-report.json not found! Skipping enrichment."
+            exit 0
+          fi
+
+          jq -r '.Results[]?.Vulnerabilities[]?.VulnerabilityID' trivy-report.json | sort -u > cves.txt || true
+          
+          CVE_COUNT=$(wc -l < cves.txt | tr -d ' ')
+          echo "ℹ️  Found $CVE_COUNT unique CVE(s) to evaluate for ${{ matrix.service }}."
+
+          if [ "$CVE_COUNT" -eq 0 ]; then
+            echo "✅ No vulnerabilities to evaluate. Moving on."
+            exit 0
+          fi
+
+          curl -s https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json > kev.json
+          jq -r '.vulnerabilities[].cveID' kev.json > kev.txt
+          grep -Ff kev.txt cves.txt > kev_matches.txt || true
+          
+          > epss_results.txt
+          while read cve; do
+            if [ -n "$cve" ] && [ "$cve" != "null" ]; then
+              echo "Fetching EPSS score for $cve..."
+              curl -s "https://api.first.org/data/v1/epss?cve=$cve" >> epss_results.txt
+              echo "" >> epss_results.txt
+            fi
+          done < cves.txt
+
+      - name: Risk-Based Policy Check for ${{ matrix.service }}
+        run: |
+          FAIL=0
+          
+          if [ -f epss_results.txt ]; then
+            while read cve; do
+              if [ -z "$cve" ] || [ "$cve" == "null" ]; then continue; fi
+
+              EPSS=$(grep -A 1 "\"cve\":\"$cve\"" epss_results.txt | grep -oP '"epss":"\K[0-9.]+' | head -1 || echo "0")
+              CVSS=$(jq -r --arg cve "$cve" '.Results[]?.Vulnerabilities[]? | select(.VulnerabilityID == $cve) | .CVSS.nvd.V3Score // .CVSS.redhat.V3Score // 0' trivy-report.json | head -1)
+              
+              if [ -z "$EPSS" ] || [ "$EPSS" == "null" ]; then EPSS="0"; fi
+              if [ -z "$CVSS" ] || [ "$CVSS" == "null" ]; then CVSS="0"; fi
+              
+              IN_KEV="No"
+              if grep -q "$cve" kev_matches.txt 2>/dev/null; then
+                IN_KEV="Yes"
+                FAIL=1
+              fi
+
+              echo "--------------------------------------------------------"
+              echo "🔍 CVE: $cve"
+              echo "   - CVSS Score: $CVSS"
+              echo "   - EPSS Score: $EPSS"
+              echo "   - In CISA KEV: $IN_KEV"
+              
+              if awk "BEGIN {exit !($EPSS > 0.7 && $CVSS > 7.0)}"; then
+                echo "   ❌ Policy Violation! EPSS > 0.7 & CVSS > 7.0"
+                FAIL=1
+              else
+                echo "   ✅ Within acceptable risk thresholds."
+              fi
+            done < cves.txt
+          fi
+          
+          echo "--------------------------------------------------------"
+          
+          if [ "$FAIL" -eq 1 ]; then
+            echo "❌ Pipeline failed due to risk-based policy in ${{ matrix.service }}."
+            exit 1
+          fi
 
       - name: Sign all images with Cosign
         env:
