@@ -88,9 +88,8 @@ jobs:
           quiet: true
           soft_fail: false
 
-      # SAST: Semgrep — only on PRs (where it adds most value for code review)
+      # SAST: Semgrep
       - name: Semgrep Scan
-        if: github.event_name == 'pull_request'
         uses: returntocorp/semgrep-action@v1
         with:
           config: "p/default"
