@@ -13,6 +13,9 @@ services/pfe_devsecops/.github/
 # Disabled workflow files
 **/*.disabled
 
+# Legacy test client using deprecated grpc package (not @grpc/grpc-js) — not a production service
+services/pfe_devsecops/src/currencyservice/client.js
+
 # OPA test fixtures — intentionally contain security violations to test OPA policies
 services/pfe_devsecops/security/tests/test-opa-violations.yaml
 services/pfe_devsecops/security/test.yaml

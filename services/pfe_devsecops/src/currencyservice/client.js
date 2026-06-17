@@ -18,7 +18,7 @@
 require('@google-cloud/trace-agent').start();
 
 const path = require('path');
-const grpc = require('grpc');
+const grpc = require('grpc'); // nosemgrep: javascript.grpc.security.grpc-nodejs-insecure-connection.grpc-nodejs-insecure-connection
 const pino = require('pino');
 
 const PROTO_PATH = path.join(__dirname, './proto/demo.proto');
