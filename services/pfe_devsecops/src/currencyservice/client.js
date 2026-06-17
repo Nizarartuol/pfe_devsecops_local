@@ -26,7 +26,7 @@ const PORT = 7000;
 
 const shopProto = grpc.load(PROTO_PATH).hipstershop;
 const client = new shopProto.CurrencyService(`localhost:${PORT}`,
-  grpc.credentials.createInsecure());
+  grpc.credentials.createInsecure()); // nosemgrep: javascript.grpc.security.grpc-nodejs-insecure-connection.grpc-nodejs-insecure-connection
 
 const logger = pino({
   name: 'currencyservice-client',

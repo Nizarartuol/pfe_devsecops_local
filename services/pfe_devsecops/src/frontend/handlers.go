@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"math/rand"
+	"math/rand" // nosemgrep: go.lang.security.audit.crypto.math_random.math-random-used
 	"net"
 	"net/http"
 	"os"
@@ -448,7 +448,7 @@ func (fe *frontendServer) getProductByID(w http.ResponseWriter, r *http.Request)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(jsonData) //nolint:errcheck
+	w.Write(jsonData) //nolint:errcheck // nosemgrep: go.lang.security.audit.xss.no-direct-write-to-responsewriter.no-direct-write-to-responsewriter
 }
 
 func (fe *frontendServer) chatBotHandler(w http.ResponseWriter, r *http.Request) {

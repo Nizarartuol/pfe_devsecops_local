@@ -21,7 +21,7 @@ import sys
 import time
 import grpc
 import traceback
-from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateError  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
+from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateError
 from google.api_core.exceptions import GoogleAPICallError
 from google.auth.exceptions import DefaultCredentialsError
 
@@ -43,7 +43,7 @@ from logger import getJSONLogger
 logger = getJSONLogger('emailservice-server')
 
 # Loads confirmation email template from file
-env = Environment(
+env = Environment(  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
     loader=FileSystemLoader('templates'),
     autoescape=select_autoescape(['html', 'xml'])
 )
@@ -88,7 +88,7 @@ class EmailService(BaseEmailService):
     order = request.order
 
     try:
-      confirmation = template.render(order = order)
+      confirmation = template.render(order = order)  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
     except TemplateError as err:
       context.set_details("An error occurred when preparing the confirmation mail.")
       logger.error(err.message)

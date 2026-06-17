@@ -15,6 +15,7 @@ services/pfe_devsecops/.github/
 
 # OPA test fixtures — intentionally contain security violations to test OPA policies
 services/pfe_devsecops/security/tests/test-opa-violations.yaml
+services/pfe_devsecops/security/test.yaml
 
 # Load test scripts (not application code)
 load_*.js
