@@ -1,0 +1,19 @@
+# Third-party / generated code — not owned by this project
+autoscaler/
+cluster/
+infra/
+gitops-repo/
+custom-autoscaler/
+venv/
+Backup/
+Backup 2/
+
+# Load test scripts (not application code)
+load_*.js
+spike_*.js
+loadtest.js
+
+# Archived artefacts
+*.tar.gz
+*.json
+logs_dir/
