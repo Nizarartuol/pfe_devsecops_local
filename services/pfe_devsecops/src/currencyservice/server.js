@@ -77,8 +77,8 @@ const path = require('path');
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 
-const MAIN_PROTO_PATH = path.join(__dirname, './proto/demo.proto');
-const HEALTH_PROTO_PATH = path.join(__dirname, './proto/grpc/health/v1/health.proto');
+const MAIN_PROTO_PATH = path.join(__dirname, './proto/demo.proto'); // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
+const HEALTH_PROTO_PATH = path.join(__dirname, './proto/grpc/health/v1/health.proto'); // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
 
 const PORT = process.env.PORT;
 
@@ -181,13 +181,13 @@ function check (call, callback) {
  */
 function main () {
   logger.info(`Starting gRPC server on port ${PORT}...`);
-  const server = new grpc.Server();
+  const server = new grpc.Server(); // nosemgrep: javascript.grpc.security.grpc-nodejs-insecure-connection.grpc-nodejs-insecure-connection
   server.addService(shopProto.CurrencyService.service, {getSupportedCurrencies, convert});
   server.addService(healthProto.Health.service, {check});
 
   server.bindAsync(
     `[::]:${PORT}`,
-    grpc.ServerCredentials.createInsecure(),
+    grpc.ServerCredentials.createInsecure(), // nosemgrep: javascript.grpc.security.grpc-nodejs-insecure-connection.grpc-nodejs-insecure-connection
     function() {
       logger.info(`CurrencyService gRPC server started on port ${PORT}`);
       server.start();

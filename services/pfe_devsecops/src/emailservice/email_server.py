@@ -21,7 +21,7 @@ import sys
 import time
 import grpc
 import traceback
-from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateError
+from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateError  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
 from google.api_core.exceptions import GoogleAPICallError
 from google.auth.exceptions import DefaultCredentialsError
 

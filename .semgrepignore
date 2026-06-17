@@ -8,6 +8,14 @@ venv/
 Backup/
 Backup 2/
 
+# Inactive/archived CI workflow copies (not read by GitHub Actions)
+services/pfe_devsecops/.github/
+# Disabled workflow files
+**/*.disabled
+
+# OPA test fixtures — intentionally contain security violations to test OPA policies
+services/pfe_devsecops/security/tests/test-opa-violations.yaml
+
 # Load test scripts (not application code)
 load_*.js
 spike_*.js

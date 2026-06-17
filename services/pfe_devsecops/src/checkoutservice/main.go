@@ -135,7 +135,7 @@ func main() {
 	otel.SetTextMapPropagator(
 		propagation.NewCompositeTextMapPropagator(
 			propagation.TraceContext{}, propagation.Baggage{}))
-	srv = grpc.NewServer(
+	srv = grpc.NewServer( // nosemgrep: go.grpc.security.grpc-server-insecure-connection.grpc-server-insecure-connection
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
 

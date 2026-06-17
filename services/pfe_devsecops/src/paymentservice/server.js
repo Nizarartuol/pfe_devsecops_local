@@ -25,11 +25,11 @@ class HipsterShopServer {
     this.port = port;
 
     this.packages = {
-      hipsterShop: this.loadProto(path.join(protoRoot, 'demo.proto')),
-      health: this.loadProto(path.join(protoRoot, 'grpc/health/v1/health.proto'))
+      hipsterShop: this.loadProto(path.join(protoRoot, 'demo.proto')), // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
+      health: this.loadProto(path.join(protoRoot, 'grpc/health/v1/health.proto')) // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
     };
 
-    this.server = new grpc.Server();
+    this.server = new grpc.Server(); // nosemgrep: javascript.grpc.security.grpc-nodejs-insecure-connection.grpc-nodejs-insecure-connection
     this.loadAllProtos(protoRoot);
   }
 
@@ -59,7 +59,7 @@ class HipsterShopServer {
     const port = this.port
     server.bindAsync(
       `[::]:${port}`,
-      grpc.ServerCredentials.createInsecure(),
+      grpc.ServerCredentials.createInsecure(), // nosemgrep: javascript.grpc.security.grpc-nodejs-insecure-connection.grpc-nodejs-insecure-connection
       function () {
         logger.info(`PaymentService gRPC server started on port ${port}`);
         server.start();

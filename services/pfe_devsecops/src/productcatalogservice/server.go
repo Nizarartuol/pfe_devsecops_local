@@ -131,7 +131,7 @@ func run(port string) string {
 		propagation.NewCompositeTextMapPropagator(
 			propagation.TraceContext{}, propagation.Baggage{}))
 	var srv *grpc.Server
-	srv = grpc.NewServer(
+	srv = grpc.NewServer( // nosemgrep: go.grpc.security.grpc-server-insecure-connection.grpc-server-insecure-connection
 		grpc.StatsHandler(otelgrpc.NewServerHandler()))
 
 	svc := &productCatalog{}

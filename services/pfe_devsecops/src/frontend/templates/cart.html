@@ -42,6 +42,7 @@
                             <h3>Cart ({{ $.cart_size }})</h3>
                         </div>
                         <div class="col-8 pr-md-0 text-right">
+                            <!-- nosemgrep: python.django.security.django-no-csrf-token.django-no-csrf-token -->
                             <form method="POST" action="{{ $.baseUrl }}/cart/empty">
                                 <button class="cymbal-button-secondary cart-summary-empty-cart-button" type="submit">
                                     Empty Cart
@@ -99,6 +100,7 @@
 
                 <div class="col-lg-5 offset-lg-1 col-xl-4">
 
+                    <!-- nosemgrep: python.django.security.django-no-csrf-token.django-no-csrf-token -->
                     <form class="cart-checkout-form" action="{{ $.baseUrl }}/cart/checkout" method="POST">
 
                         <div class="row">

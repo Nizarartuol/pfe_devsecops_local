@@ -15,21 +15,13 @@
 package main
 
 import (
+	"crypto/rand"
 	"fmt"
-	"math/rand"
-	"time"
+	"math/big"
 )
-
-// seeded determines if the random number generator is ready.
-var seeded bool = false
 
 // CreateTrackingId generates a tracking ID.
 func CreateTrackingId(salt string) string {
-	if !seeded {
-		rand.Seed(time.Now().UnixNano())
-		seeded = true
-	}
-
 	return fmt.Sprintf("%c%c-%d%s-%d%s",
 		getRandomLetterCode(),
 		getRandomLetterCode(),
@@ -42,15 +34,16 @@ func CreateTrackingId(salt string) string {
 
 // getRandomLetterCode generates a code point value for a capital letter.
 func getRandomLetterCode() uint32 {
-	return 65 + uint32(rand.Intn(25))
+	n, _ := rand.Int(rand.Reader, big.NewInt(25))
+	return 65 + uint32(n.Int64())
 }
 
 // getRandomNumber generates a string representation of a number with the requested number of digits.
 func getRandomNumber(digits int) string {
 	str := ""
 	for i := 0; i < digits; i++ {
-		str = fmt.Sprintf("%s%d", str, rand.Intn(10))
+		n, _ := rand.Int(rand.Reader, big.NewInt(10))
+		str = fmt.Sprintf("%s%d", str, n.Int64())
 	}
-
 	return str
 }

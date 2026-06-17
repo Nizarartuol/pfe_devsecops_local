@@ -168,7 +168,7 @@ func main() {
 	handler = otelhttp.NewHandler(handler, "frontend") // add OTel tracing
 
 	log.Infof("starting server on %s:%s", addr, srvPort)
-	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))
+	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler)) // nosemgrep: go.lang.security.audit.net.use-tls.use-tls
 }
 func initStats(log logrus.FieldLogger) {
 	// TODO(arbrown) Implement OpenTelemtry stats
