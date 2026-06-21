@@ -352,7 +352,10 @@ jobs:
           for svc in ${{ env.SERVICES }}; do
             IMAGE="$REGISTRY/$svc:$TAG"
             echo "Signing $IMAGE"
-            cosign sign --yes "$IMAGE"
+            OIDC_TOKEN=$(curl --retry 3 -s \
+              -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sigstore" | jq -r '.value')
+            cosign sign --yes --identity-token="$OIDC_TOKEN" "$IMAGE"
           done
 
       - name: Download ZAP Report
