@@ -14,6 +14,7 @@ permissions:
   contents: write
   packages: write
   security-events: write
+  id-token: write       # REQUIRED for Cosign keyless signing (Sigstore OIDC) — without it cosign falls back to the interactive device flow and fails with "expired_token"
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────────
@@ -238,6 +239,10 @@ jobs:
   build-push:
     runs-on: ubuntu-latest
     needs: security
+    permissions:
+      id-token: write   # mandatory for Cosign keyless signing (sign + attest)
+      packages: write   # push images / SBOM attestations to GHCR
+      contents: read
     strategy:
       fail-fast: true
       matrix:
