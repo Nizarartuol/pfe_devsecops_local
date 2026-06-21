@@ -79,6 +79,27 @@ jobs:
           format: table
           cache-dir: ~/.cache/trivy
 
+      - name: Trivy FS Scan (JSON for report)
+        if: always()
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: ./services/pfe_devsecops/src
+          severity: CRITICAL,HIGH
+          exit-code: 0
+          ignore-unfixed: true
+          format: json
+          output: trivy-fs-report.json
+          cache-dir: ~/.cache/trivy
+
+      - name: Upload Trivy FS Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-fs-report
+          path: trivy-fs-report.json
+          retention-days: 90
+
       # IaC Security: Checkov — Kubernetes manifests + Dockerfiles
       - name: Checkov IaC Scan
         uses: bridgecrewio/checkov-action@v12
@@ -198,7 +219,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: zap-report
-          path: report_md.md
+          path: |
+            report_md.md
+            report_json.json
+            report_html.html
+            zap-report.json
+          if-no-files-found: warn
 
       - name: Stop frontend container
         if: always()
@@ -363,48 +389,48 @@ jobs:
             exit 1
           fi
 
-      - name: Sign all images with Cosign
-        env:
-          COSIGN_EXPERIMENTAL: "true"
-        run: |
-          REGISTRY="${{ env.REGISTRY }}"
-          TAG="${{ env.IMAGE_TAG }}"
-          SERVICES="${{ env.SERVICES }}"
-
-          for svc in $SERVICES; do
-            IMAGE="$REGISTRY/$svc:$TAG"
-            echo "🔏 Signing $IMAGE"
-            cosign sign --yes "$IMAGE"
-            echo "✅ $svc signed successfully"
-          done
-
-      - name: Generate and sign SBOM for all services
-        env:
-          COSIGN_EXPERIMENTAL: "true"
-        run: |
-          REGISTRY="${{ env.REGISTRY }}"
-          TAG="${{ env.IMAGE_TAG }}"
-          SERVICES="${{ env.SERVICES }}"
-
-          for svc in $SERVICES; do
-            IMAGE="$REGISTRY/$svc:$TAG"
-            echo "📋 Generating SBOM for $svc"
-            syft "$IMAGE" -o spdx-json > sbom-$svc.json
-
-            echo "🔏 Signing SBOM for $svc"
-            cosign attest --yes \
-              --predicate sbom-$svc.json \
-              --type spdxjson \
-              "$IMAGE"
-
-            echo "✅ SBOM generated and signed for $svc"
-          done
-
-      - name: Upload SBOMs as artifacts
+      - name: Upload Trivy image report — ${{ matrix.service }}
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: sbom-reports
-          path: sbom-*.json
+          name: trivy-image-report-${{ matrix.service }}
+          path: trivy-report.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Sign image with Cosign — ${{ matrix.service }}
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}"
+          echo "Signing $IMAGE"
+          cosign sign --yes "$IMAGE"
+          echo "${{ matrix.service }} signed successfully"
+
+      - name: Install Syft
+        run: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Generate and sign SBOM — ${{ matrix.service }}
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}"
+          echo "Generating SBOM for ${{ matrix.service }}"
+          syft "$IMAGE" -o spdx-json > sbom-${{ matrix.service }}.json
+
+          echo "Signing SBOM for ${{ matrix.service }}"
+          cosign attest --yes \
+            --predicate sbom-${{ matrix.service }}.json \
+            --type spdxjson \
+            "$IMAGE"
+
+          echo "SBOM generated and signed for ${{ matrix.service }}"
+
+      - name: Upload SBOM — ${{ matrix.service }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.service }}
+          path: sbom-${{ matrix.service }}.json
           retention-days: 90
 
   # ─────────────────────────────────────────────────────────────────────────────
@@ -432,15 +458,15 @@ jobs:
         run: |
           REGISTRY="${{ env.REGISTRY }}"
           TAG="${{ env.IMAGE_TAG }}"
-          SERVICES="${{ env.SERVICES }}"
+          SERVICES="frontend adservice cartservice checkoutservice currencyservice emailservice paymentservice productcatalogservice recommendationservice shippingservice loadgenerator"
 
           for svc in $SERVICES; do
             IMAGE="$REGISTRY/$svc:$TAG"
-            echo "🔍 Verifying signature for $IMAGE"
+            echo "Verifying signature for $IMAGE"
             cosign verify "$IMAGE" \
               --certificate-identity-regexp="https://github.com/Nizarartuol/.*" \
               --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
-            echo "✅ $svc signature verified"
+            echo "$svc signature verified"
           done
 
       - name: Update image tags in Kubernetes manifests
