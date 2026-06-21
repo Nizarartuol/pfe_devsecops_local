@@ -210,6 +210,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.5.0
+
       - name: Build, push, and Trivy-scan all services
         run: |
           SRC_BASE="./src"
@@ -241,6 +244,9 @@ jobs:
                 exit 1
               fi
             done
+
+            echo "▶ Signing $REGISTRY/$svc:$TAG with Cosign (keyless / OIDC)"
+            cosign sign --yes "$REGISTRY/$svc:$TAG"
 
             echo "▶ Trivy image scan: $REGISTRY/$svc:$TAG"
             # We output to console so you can see it, and we also save to JSON for EPSS
