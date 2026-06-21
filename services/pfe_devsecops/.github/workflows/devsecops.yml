@@ -245,9 +245,6 @@ jobs:
               fi
             done
 
-            echo "▶ Signing $REGISTRY/$svc:$TAG with Cosign (keyless / OIDC)"
-            cosign sign --yes "$REGISTRY/$svc:$TAG"
-
             echo "▶ Trivy image scan: $REGISTRY/$svc:$TAG"
             # We output to console so you can see it, and we also save to JSON for EPSS
             docker run --rm \
@@ -344,7 +341,17 @@ jobs:
             echo "✅ $svc done."
           done
 
-
+      - name: Sign all images with Cosign (OIDC keyless)
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          REGISTRY="${{ env.REGISTRY }}"
+          TAG="${{ env.IMAGE_TAG }}"
+          for svc in ${{ env.SERVICES }}; do
+            IMAGE="$REGISTRY/$svc:$TAG"
+            echo "Signing $IMAGE"
+            cosign sign --yes "$IMAGE"
+          done
 
       - name: Download ZAP Report
         if: always()
