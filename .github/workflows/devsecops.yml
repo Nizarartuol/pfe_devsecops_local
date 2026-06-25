@@ -70,7 +70,7 @@ jobs:
 
       # Trivy filesystem scan — CRITICAL/HIGH blocks pipeline
       - name: Trivy FS Scan
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: ./services/pfe_devsecops/src
@@ -82,7 +82,7 @@ jobs:
 
       - name: Trivy FS Scan (JSON for report)
         if: always()
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: ./services/pfe_devsecops/src
@@ -301,7 +301,7 @@ jobs:
             trivy-db-
 
       - name: Trivy image scan — ${{ matrix.service }} (Table)
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
           image-ref: ${{ env.REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
@@ -312,7 +312,7 @@ jobs:
           cache-dir: ~/.cache/trivy
 
       - name: Trivy image scan — ${{ matrix.service }} (JSON)
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
           image-ref: ${{ env.REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
