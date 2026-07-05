@@ -15,8 +15,11 @@
 
 FROM --platform=$BUILDPLATFORM python:3.14.2-alpine@sha256:31da4cb527055e4e3d7e9e006dffe9329f84ebea79eaca0a1f1c27ce61e40ca5 AS base
 
-# Upgrade all Alpine OS packages to fix vulnerabilities and add curl for healthcheck.
-RUN apk update && apk upgrade --no-cache && apk add --no-cache curl
+# CACHE_BUST forces this layer to re-run even when the Dockerfile is unchanged, so the
+# Alpine package index is re-fetched instead of reusing a stale build cache with old fixes.
+ARG CACHE_BUST=unset
+RUN echo "cache-bust: ${CACHE_BUST}" \
+    && apk update && apk upgrade --no-cache && apk add --no-cache curl
 
 FROM base AS builder
 

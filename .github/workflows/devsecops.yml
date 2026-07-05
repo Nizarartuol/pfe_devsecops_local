@@ -285,12 +285,20 @@ jobs:
             echo "path=./services/pfe_devsecops/src/${{ matrix.service }}" >> $GITHUB_OUTPUT
           fi
 
+      # Daily value passed as CACHE_BUST so the "apk upgrade" layer is re-run once a day
+      # instead of being served forever from the GHA build cache with stale OS package fixes.
+      - name: Compute daily cache-bust value
+        id: cachebust
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
       - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v6
         with:
           context: ${{ steps.ctx.outputs.path }}
           push: true
           tags: ${{ env.REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
+          build-args: |
+            CACHE_BUST=${{ steps.cachebust.outputs.date }}
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,scope=${{ matrix.service }},mode=max
 

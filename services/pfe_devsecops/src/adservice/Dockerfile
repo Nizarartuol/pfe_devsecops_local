@@ -28,8 +28,11 @@ RUN ./gradlew installDist
 
 FROM eclipse-temurin:25.0.1_8-jre-alpine@sha256:9c65fe190cb22ba92f50b8d29a749d0f1cfb2437e09fe5fbf9ff927c45fc6e99
 
-# Upgrade all Alpine OS packages to fix vulnerabilities detected by Trivy.
-RUN apk update && apk upgrade --no-cache && apk add --no-cache curl
+# CACHE_BUST forces this layer to re-run even when the Dockerfile is unchanged, so the
+# Alpine package index is re-fetched instead of reusing a stale build cache with old fixes.
+ARG CACHE_BUST=unset
+RUN echo "cache-bust: ${CACHE_BUST}" \
+    && apk update && apk upgrade --no-cache && apk add --no-cache curl
 
 
 # Create non-root user

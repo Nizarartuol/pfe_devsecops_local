@@ -30,8 +30,11 @@ RUN npm install --only=production
 
 FROM alpine:3.23.3@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
 
-# Upgrade all Alpine OS packages to fix vulnerabilities and add curl for healthcheck.
-RUN apk update && apk upgrade --no-cache && apk add --no-cache curl
+# CACHE_BUST forces this layer to re-run even when the Dockerfile is unchanged, so the
+# Alpine package index is re-fetched instead of reusing a stale build cache with old fixes.
+ARG CACHE_BUST=unset
+RUN echo "cache-bust: ${CACHE_BUST}" \
+    && apk update && apk upgrade --no-cache && apk add --no-cache curl
 
 RUN apk add --no-cache nodejs
 
