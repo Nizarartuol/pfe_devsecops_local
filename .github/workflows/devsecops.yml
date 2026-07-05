@@ -69,14 +69,14 @@ jobs:
             fi
           done
 
-      # Trivy filesystem scan — CRITICAL/HIGH reported (audit mode; enforcement in image scans)
+      # Trivy filesystem scan — blocks the pipeline on CRITICAL/HIGH fixable vulnerabilities
       - name: Trivy FS Scan
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: ./services/pfe_devsecops/src
           severity: CRITICAL,HIGH
-          exit-code: 0
+          exit-code: 1
           ignore-unfixed: true
           format: table
           cache-dir: ~/.cache/trivy
@@ -302,18 +302,10 @@ jobs:
           restore-keys: |
             trivy-db-
 
-      - name: Trivy image scan — ${{ matrix.service }} (Table)
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: image
-          image-ref: ${{ env.REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
-          severity: CRITICAL,HIGH
-          exit-code: 0
-          ignore-unfixed: true
-          format: table
-          cache-dir: ~/.cache/trivy
-
+      # JSON report generated first (and always) so the artifact is available even if the
+      # blocking table scan below fails the job.
       - name: Trivy image scan — ${{ matrix.service }} (JSON)
+        if: always()
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
@@ -323,6 +315,18 @@ jobs:
           ignore-unfixed: true
           format: json
           output: trivy-report.json
+          cache-dir: ~/.cache/trivy
+
+      # Blocks the pipeline on CRITICAL/HIGH fixable vulnerabilities
+      - name: Trivy image scan — ${{ matrix.service }} (Table)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          ignore-unfixed: true
+          format: table
           cache-dir: ~/.cache/trivy
 
       - name: EPSS, KEV and CVSS Risk Evaluation
