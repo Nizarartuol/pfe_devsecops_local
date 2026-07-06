@@ -31,7 +31,20 @@ RUN dotnet publish cartservice.csproj \
     -o /cartservice
 
 # https://mcr.microsoft.com/product/dotnet/runtime-deps
-FROM mcr.microsoft.com/dotnet/runtime-deps:10.0.0-noble-chiseled@sha256:b857c8cb8d929183cfe4c6dd9994abba92a2639dd2dbaf06005379f815991604
+# Non-chiseled "noble" variant (instead of noble-chiseled) is used so the apt package
+# index/upgrade below can run — chiseled images ship no shell or package manager, so
+# OS-level CVE fixes (e.g. openssl/libssl3t64) could never be applied without re-pinning
+# the base digest by hand every time.
+FROM mcr.microsoft.com/dotnet/runtime-deps:10.0.0-noble@sha256:69ee6d1a1b7a92cc82a71001342554d4611a509d880114b2d5653ff5e73eb436
+
+# CACHE_BUST forces this layer to re-run even when the Dockerfile is unchanged, so the
+# apt package index is re-fetched instead of reusing a stale build cache with old fixes.
+ARG CACHE_BUST=unset
+RUN echo "cache-bust: ${CACHE_BUST}" \
+    && apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY --from=builder /cartservice .
